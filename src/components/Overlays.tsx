@@ -94,23 +94,48 @@ function SparkIcon() {
   );
 }
 
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-15 shrink-0 text-white/35 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-white/65" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <path d="m9 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-17" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h4l2 2h6a2.5 2.5 0 0 1 2.5 2.5v7A2.5 2.5 0 0 1 18 19H6a2.5 2.5 0 0 1-2.5-2.5Z" strokeLinejoin="round" />
+      <path d="M3.8 10h16.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function ProfileAction({
   children,
   icon,
+  description,
   onClick,
 }: {
   children: React.ReactNode;
   icon?: React.ReactNode;
+  description?: string;
   onClick?: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="pointer-events-auto flex h-52 w-full items-center justify-center gap-10 rounded-full border border-white/12 px-20 text-white transition-all duration-300 ease-out hover:border-white/25 hover:bg-white/[0.06] active:scale-[0.99]"
+      className="group pointer-events-auto flex min-h-[64px] w-full items-center gap-13 rounded-[1.1rem] px-13 py-11 text-left text-white transition-colors duration-200 hover:bg-white/[0.055] active:bg-white/[0.09] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white/60"
     >
-      {icon}
-      <span className="text-14 tracking-[-0.02em]">{children}</span>
+      <span className="flex size-42 shrink-0 items-center justify-center rounded-full bg-white/[0.055] text-white/80 transition-colors group-hover:bg-white/[0.09]">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-14 leading-18 tracking-[-0.025em]">{children}</span>
+        {description && <span className="mt-3 block text-11 leading-15 text-white/45">{description}</span>}
+      </span>
+      <ChevronIcon />
     </button>
   );
 }
@@ -122,6 +147,7 @@ export function ProfileOverlay({
   onAdminTemplates,
   onWebsiteTemplates,
 }: OverlayProps & {
+  onClose: () => void;
   onMyProjects?: () => void;
   onMyTemplates?: () => void;
   onSmartEdit?: () => void;
@@ -135,113 +161,146 @@ export function ProfileOverlay({
   return (
     <div
       ref={ref}
-      className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center px-15 s:px-25"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/80 text-white backdrop-blur-md [touch-action:pan-y] s:flex s:items-center s:justify-center s:px-25 s:py-20"
       style={{ visibility: visible ? "visible" : "hidden" }}
     >
       <div
         data-reveal
-        className="pointer-events-auto w-full max-w-[30rem] overflow-hidden rounded-[2rem] border border-white/10 bg-[#151515]/95 text-white shadow-[0_30px_100px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="paper-stish-account-title"
+        className="mx-auto flex min-h-[100dvh] w-full max-w-[36rem] flex-col bg-[#101010] px-20 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1.6rem,env(safe-area-inset-top))] text-white s:min-h-0 s:max-h-[min(86dvh,800px)] s:overflow-y-auto s:rounded-[2rem] s:border s:border-white/10 s:px-28 s:pb-24 s:pt-25 s:shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
       >
-        <div className="flex items-center justify-between px-25 pb-18 pt-25 s:px-30 s:pb-20 s:pt-30">
-          <div className="min-w-0">
-            <p className="label opacity-55">PAPER STISH</p>
-            <h2 className="mt-7 truncate text-20 leading-20 tracking-[-0.04em]">Your account</h2>
-          </div>
-          <div className="flex size-40 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80">
-            <UserIcon />
-          </div>
-        </div>
+        <header className="flex shrink-0 items-center justify-between gap-12 border-b border-white/10 pb-18">
+          <div className="label text-white/90">PAPER STISH</div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close account"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-10 text-11 font-medium tracking-[0.02em] text-white/75 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/60"
+          >
+            CLOSE
+          </button>
+        </header>
 
-        <div className="px-15 pb-15 s:px-20 s:pb-20">
-          <div data-reveal className="mb-10">
-            <ProfileAction
-              icon={<SparkIcon />}
-              onClick={onWebsiteTemplates}
-            >
-              Website Templates
-            </ProfileAction>
-          </div>
-          {!signedIn ? (
-            <div data-reveal className="rounded-[1.55rem] bg-[#272727] p-20 s:p-25">
-              <div className="flex items-start gap-12">
-                <div className="flex size-38 shrink-0 items-center justify-center rounded-full bg-white text-black">
-                  <svg viewBox="0 0 24 24" className="size-17" aria-hidden="true">
-                    <path d="M21.35 12.27c0-.77-.07-1.51-.21-2.23H12v4.22h5.24a4.48 4.48 0 0 1-1.94 2.94v2.44h3.14c1.84-1.69 2.91-4.17 2.91-7.37Z" fill="#4285F4"/>
-                    <path d="M12 22c2.7 0 4.97-.89 6.63-2.41l-3.14-2.44c-.87.58-1.97.92-3.49.92-2.68 0-4.95-1.81-5.77-4.24H3v2.51A10 10 0 0 0 12 22Z" fill="#34A853"/>
-                    <path d="M6.23 13.83A6 6 0 0 1 5.91 12c0-.64.11-1.26.32-1.83V7.66H3a10 10 0 0 0 0 8.68l3.23-2.51Z" fill="#FBBC05"/>
-                    <path d="M12 5.93c1.47 0 2.8.51 3.84 1.52l2.88-2.88C16.96 2.99 14.7 2 12 2a10 10 0 0 0-9 5.66l3.23 2.51C7.05 7.74 9.32 5.93 12 5.93Z" fill="#EA4335"/>
-                  </svg>
+        <main className="flex-1 pt-24">
+          <p className="label text-white/45">YOUR ACCOUNT</p>
+          <h2 id="paper-stish-account-title" className="mt-7 text-30 leading-[1.05] tracking-[-0.05em]">
+            Account
+          </h2>
+
+          {signedIn ? (
+            <section data-reveal aria-label="Signed-in account" className="mt-20 flex items-center gap-14 rounded-[1.55rem] border border-white/[0.07] bg-white/[0.045] p-15">
+              <div className="size-52 shrink-0 overflow-hidden rounded-full bg-white/10">
+                {session.user?.image ? (
+                  <img src={session.user.image} alt="" className="size-full object-cover" />
+                ) : (
+                  <div className="flex size-full items-center justify-center"><UserIcon /></div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-16 leading-20 tracking-[-0.03em]">
+                  {session.user?.name ?? "Paper Stish user"}
+                </p>
+                <p className="mt-5 break-words text-12 leading-16 text-white/50">
+                  {session.user?.email ?? ""}
+                </p>
+                <p className="mt-8 text-10 font-medium uppercase tracking-[0.08em] text-white/35">Signed in with Google</p>
+              </div>
+            </section>
+          ) : (
+            <section data-reveal className="mt-20 rounded-[1.55rem] border border-white/[0.07] bg-white/[0.045] p-16 s:p-20">
+              <div className="flex items-center gap-12">
+                <div className="flex size-42 shrink-0 items-center justify-center rounded-full bg-white/[0.07] text-white/75">
+                  <UserIcon />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-15 leading-17 tracking-[-0.02em]">Sign in with Google</p>
-                  <p className="mt-5 text-12 leading-15 tracking-[-0.01em] text-white/50">
-                    Save your projects to your Paper Stish account.
+                <div className="min-w-0 flex-1">
+                  <p className="text-14 tracking-[-0.025em]">Make it yours</p>
+                  <p className="mt-5 text-11 leading-15 text-white/50">
+                    Sign in to keep your Smart Edit projects connected to your account.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => signIn("google")}
-                className="pointer-events-auto mt-18 flex h-48 w-full items-center justify-center gap-9 rounded-full bg-white text-black text-14 tracking-[-0.02em] transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99]"
+                className="mt-16 flex min-h-[48px] w-full items-center justify-center gap-9 rounded-full bg-white px-16 text-13 font-medium tracking-[-0.02em] text-black transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 Continue with Google
               </button>
-            </div>
-          ) : (
-            <>
-              <div data-reveal className="rounded-[1.55rem] bg-[#272727] p-20 s:p-25">
-                <div className="flex items-center gap-12">
-                  <div className="size-38 shrink-0 overflow-hidden rounded-full bg-white/10">
-                    {session.user?.image ? (
-                      <img src={session.user.image} alt="" className="size-full object-cover" />
-                    ) : (
-                      <div className="flex size-full items-center justify-center"><UserIcon /></div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-15 leading-17 tracking-[-0.02em]">
-                      {session.user?.name ?? "Paper Stish user"}
-                    </p>
-                    <p className="mt-5 truncate text-12 leading-15 tracking-[-0.01em] text-white/50">
-                      {session.user?.email ?? ""}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div data-reveal className="mt-10 flex flex-col gap-8">
-                <ProfileAction icon={<SparkIcon />} onClick={onSmartEdit}>Smart Edit</ProfileAction>
-                {isAdminEmail(session.user?.email) && (
-                  <ProfileAction icon={<SparkIcon />} onClick={onAdminTemplates}>Admin Templates</ProfileAction>
-                )}
-                <ProfileAction icon={<UserIcon />} onClick={onMyProjects}>My Projects</ProfileAction>
-              </div>
-
-              <div data-reveal className="mt-15 border-t border-white/10 pt-15 text-center">
-                <button
-                  type="button"
-                  onClick={() => signOut()}
-                  className="pointer-events-auto text-12 tracking-[-0.01em] text-white/45 transition-colors duration-300 hover:text-white/80"
-                >
-                  Sign out
-                </button>
-              </div>
-            </>
+            </section>
           )}
-        </div>
 
-        <div className="px-25 pb-22 text-center s:px-30 s:pb-25">
-          <nav aria-label="Legal and support" className="label mb-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-6 text-white/45">
-            <a href="/privacy" className="transition-opacity hover:text-white">Privacy</a>
+          <section data-reveal className="mt-25">
+            <h3 className="label text-white/45">CREATE &amp; MANAGE</h3>
+            <div className="mt-9 rounded-[1.5rem] border border-white/[0.09] bg-white/[0.018] p-5">
+              <ProfileAction
+                icon={<SparkIcon />}
+                description="Choose a starting point for your website"
+                onClick={onWebsiteTemplates}
+              >
+                Website Templates
+              </ProfileAction>
+              {signedIn && (
+                <>
+                  <ProfileAction
+                    icon={<SparkIcon />}
+                    description="Design and customize from scratch"
+                    onClick={onSmartEdit}
+                  >
+                    Smart Edit
+                  </ProfileAction>
+                  {isAdminEmail(session.user?.email) && (
+                    <ProfileAction
+                      icon={<SparkIcon />}
+                      description="Publish templates for everyone"
+                      onClick={onAdminTemplates}
+                    >
+                      Admin Templates
+                    </ProfileAction>
+                  )}
+                  <ProfileAction
+                    icon={<FolderIcon />}
+                    description="Pick up where you left off"
+                    onClick={onMyProjects}
+                  >
+                    My Projects
+                  </ProfileAction>
+                </>
+              )}
+            </div>
+          </section>
+
+          {signedIn && (
+            <div data-reveal className="mt-18 border-t border-white/10 pt-13">
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="flex min-h-[44px] w-full items-center justify-between rounded-xl px-12 text-12 text-white/55 transition-colors hover:bg-white/[0.04] hover:text-white/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/60"
+              >
+                <span>Sign out</span>
+                <span aria-hidden="true" className="text-15 text-white/30">↗</span>
+              </button>
+            </div>
+          )}
+        </main>
+
+        <footer className="mt-24 shrink-0 border-t border-white/[0.08] pt-15 text-center">
+          <nav aria-label="Legal and support" className="label flex flex-wrap items-center justify-center gap-x-7 gap-y-6 text-white/45">
+            <a href="/privacy" className="min-h-[24px] transition-colors hover:text-white">Privacy</a>
             <span aria-hidden="true">•</span>
-            <a href="/terms" className="transition-opacity hover:text-white">Terms</a>
+            <a href="/terms" className="min-h-[24px] transition-colors hover:text-white">Terms</a>
             <span aria-hidden="true">•</span>
-            <a href="mailto:sandeepdolai.info@gmail.com" className="transition-opacity hover:text-white">Support</a>
+            <a href="mailto:sandeepdolai.info@gmail.com" className="min-h-[24px] transition-colors hover:text-white">Support</a>
           </nav>
-          <p className="text-10 font-medium tracking-[-0.01em] text-white/35">
+          <p className="mt-12 text-11 leading-15 font-medium tracking-[-0.01em] text-white/35">
             Making something personal should feel simple.
           </p>
-        </div>
+        </footer>
       </div>
     </div>
   );
