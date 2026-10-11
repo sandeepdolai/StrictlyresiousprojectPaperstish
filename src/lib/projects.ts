@@ -17,97 +17,12 @@ export interface Project {
 }
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const T = `${BASE_PATH}/templates/`;
 
-/** Original Paper Stish examples shown in the immersive starter carousel. */
-export const FEATURED: Project[] = [
-  {
-    title: "Love of My Life",
-    slug: "love-of-my-life",
-    description: "A personal page for your favorite person, filled with memories, photos, and the words you want them to keep.",
-    link: null,
-    tags: [{ title: "Personal website", url: null }, { title: "Love", url: null }],
-    awards: 0,
-    aspect: 1200 / 1600,
-    media: [T + "love-of-my-life.webp", T + "love-of-my-life-art.webp", T + "love-bow.webp"],
-  },
-  {
-    title: "Favorite Person",
-    slug: "favorite-person",
-    description: "A little corner of the internet for the person who makes ordinary days feel special.",
-    link: null,
-    tags: [{ title: "Personal website", url: null }, { title: "For someone", url: null }],
-    awards: 0,
-    aspect: 1200 / 1600,
-    media: [T + "love-favorite-person-art.webp", T + "love-cats.webp", T + "love-polaroid-frame.webp"],
-  },
-  {
-    title: "Little Memories",
-    slug: "little-memories",
-    description: "Bring photos, notes, and tiny moments together in one page you can share with a link.",
-    link: null,
-    tags: [{ title: "Memories", url: null }, { title: "Personal website", url: null }],
-    awards: 0,
-    aspect: 4 / 5,
-    media: [T + "love-polaroid-frame.webp", T + "love-paper-texture.webp", T + "love-bow.webp"],
-  },
-  {
-    title: "A Love Note",
-    slug: "a-love-note",
-    description: "Turn the message you keep rewriting into a thoughtful, shareable little website.",
-    link: null,
-    tags: [{ title: "Love note", url: null }, { title: "Personal website", url: null }],
-    awards: 0,
-    aspect: 3 / 4,
-    media: [T + "love-cats.webp", T + "love-bow.webp", T + "love-favorite-person-art.webp"],
-  },
-  {
-    title: "For Someone Special",
-    slug: "for-someone-special",
-    description: "A warm starting point for a birthday, anniversary, surprise, or just-because message.",
-    link: null,
-    tags: [{ title: "Surprise", url: null }, { title: "Personal website", url: null }],
-    awards: 0,
-    aspect: 4 / 5,
-    media: [T + "love-of-my-life-art.webp", T + "love-paper-texture.webp", T + "love-of-my-life.webp"],
-  },
-  {
-    title: "Our Little World",
-    slug: "our-little-world",
-    description: "Make a page that feels like your own shared universe, with space for photos and inside jokes.",
-    link: null,
-    tags: [{ title: "Us", url: null }, { title: "Personal website", url: null }],
-    awards: 0,
-    aspect: 4 / 5,
-    media: [T + "love-cats.webp", T + "love-polaroid-frame.webp", T + "love-bow.webp"],
-  },
-  {
-    title: "Everyday Reasons",
-    slug: "everyday-reasons",
-    description: "A simple way to collect the little reasons someone means the world to you.",
-    link: null,
-    tags: [{ title: "Message", url: null }, { title: "Personal website", url: null }],
-    awards: 0,
-    aspect: 4 / 5,
-    media: [T + "love-favorite-person-art.webp", T + "love-paper-texture.webp", T + "love-of-my-life.webp"],
-  },
-];
+/** Empty until new curated starter templates are ready to publish. */
+export const FEATURED: Project[] = [];
 
-
-/** Website themes shown in the Website gallery (separate from image templates). */
-export const WEBSITE_TEMPLATES: Project[] = [
-  ...FEATURED,
-  {
-    title: "Photo Album",
-    slug: "photo-album",
-    description: "A scrapbook-inspired website for six photos, tiny captions, and a message that keeps the memories together.",
-    link: null,
-    tags: [{ title: "Photos", url: null }, { title: "Memories", url: null }],
-    awards: 0,
-    aspect: 4 / 5,
-    media: [T + "love-polaroid-frame.webp", T + "love-paper-texture.webp", T + "love-of-my-life-art.webp"],
-  },
-];
+/** Empty until new curated website templates are ready to publish. */
+export const WEBSITE_TEMPLATES: Project[] = [];
 
 export interface IndexItem {
   title: string;

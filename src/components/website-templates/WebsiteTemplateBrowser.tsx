@@ -97,7 +97,7 @@ export function WebsiteTemplateBrowser() {
 
   return (
     <>
-      {folio && (
+      {folio && WEBSITE_TEMPLATES.length > 0 && (
         <HomeCarousel
           folio={folio}
           enabled={!selected}
