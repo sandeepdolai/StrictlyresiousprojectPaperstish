@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "./LoveHeartTemplate.module.css";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const ANIMATION_URL = `${BASE_PATH}/website-templates/love-heart.html`;
+const ANIMATION_URL = `${BASE_PATH}/website-templates/love-heart.html.gz.b64`;
 const EMPTY_DOCUMENT =
   '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{width:100%;height:100%;margin:0;background:#060208;overflow:hidden}</style></head><body></body></html>';
 
@@ -28,7 +28,13 @@ export function LoveHeartTemplate({ editing = false, onExit }: Props) {
     fetch(ANIMATION_URL, { cache: "force-cache" })
       .then(async (response) => {
         if (!response.ok) throw new Error("Could not load the Love Heart animation.");
-        return response.text();
+        const encoded = (await response.text()).trim();
+        const binary = window.atob(encoded);
+        const buffer = new ArrayBuffer(binary.length);
+        const bytes = new Uint8Array(buffer);
+        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+        const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
+        return new Response(stream).text();
       })
       .then((source) => {
         if (alive) setHtml(source);
