@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <clipPath id="heart">
+      <path d="M400 704 C348 654 118 507 93 344 C69 192 258 142 400 300 C542 142 731 192 707 344 C682 507 452 654 400 704Z"/>
+    </clipPath>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff6b86"/>
+      <stop offset=".5" stop-color="#e51b3e"/>
+      <stop offset="1" stop-color="#9c0928"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="#060208"/>
+  <g clip-path="url(#heart)" fill="url(#glow)" font-family="Arial, sans-serif" font-size="19" font-weight="700" text-anchor="middle">
+    <text x="400" y="198">I love you · Te amo · Ti amo</text>
+    <text x="400" y="224">Seni seviyorum · Je t'aime</text>
+    <text x="400" y="250">Ich liebe dich · Eu te amo</text>
+    <text x="400" y="276">愛してる · 사랑해 · 我爱你</text>
+    <text x="400" y="302">I love you · Te amo · Aku cinta kamu</text>
+    <text x="400" y="328">Kocham cię · Ik hou van jou</text>
+    <text x="400" y="354">Я тебя люблю · Anh yêu em</text>
+    <text x="400" y="380">I love you · Σ' αγαπώ · Te amo</text>
+    <text x="400" y="406">Seni seviyorum · Ich liebe dich</text>
+    <text x="400" y="432">我爱你 · Я тебе кохаю · Ti amo</text>
+    <text x="400" y="458">I love you · Te amo · Je t'aime</text>
+    <text x="400" y="484">ฉันรักเธอ · 愛してる · 사랑해</text>
+    <text x="400" y="510">I love you · Eu te amo · Te amo</text>
+    <text x="400" y="536">Kocham cię · Aku cinta kamu</text>
+    <text x="400" y="562">Seni seviyorum · Je t'aime</text>
+    <text x="400" y="588">I love you · Ti amo · Te amo</text>
+    <text x="400" y="614">Я тебя люблю · I love you</text>
+  </g>
+  <path d="M400 704 C348 654 118 507 93 344 C69 192 258 142 400 300 C542 142 731 192 707 344 C682 507 452 654 400 704Z" fill="none" stroke="#fd3d62" stroke-opacity=".24" stroke-width="3"/>
+</svg>
