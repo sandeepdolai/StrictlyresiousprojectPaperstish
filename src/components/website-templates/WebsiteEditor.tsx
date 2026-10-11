@@ -10,10 +10,11 @@ import {
   type TemplatePublicationValues,
 } from "@/lib/publications";
 import { PhotoAlbumTemplate, DEFAULT_ALBUM_CAPTIONS, DEFAULT_ALBUM_PHOTOS } from "./PhotoAlbumTemplate";
+import { LoveHeartTemplate } from "./LoveHeartTemplate";
 import { LoveOfMyLifeTemplate } from "./LoveOfMyLifeTemplate";
 import styles from "./WebsiteEditor.module.css";
 
-export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "photo-album";
+export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "photo-album" | "love-heart";
 
 type EditableWebsiteField =
   | "heading"
@@ -59,12 +60,19 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
     images: [],
     captions: [],
   },
+  "love-heart": {
+    heading: "Love Heart",
+    photoUrl: null,
+    images: [],
+    captions: [],
+  },
 };
 
 const TEMPLATE_TITLES: Record<WebsiteEditorTemplateSlug, string> = {
   "love-of-my-life": "Love of My Life",
   "birthday-template": "Birthday Website",
   "photo-album": "Photo Album",
+  "love-heart": "Love Heart",
 };
 
 function defaultValues(templateSlug: WebsiteEditorTemplateSlug): TemplatePublicationValues {
@@ -127,7 +135,7 @@ export function WebsiteEditor({
   const [values, setValues] = useState<TemplatePublicationValues>(() => defaultValues(templateSlug));
   const [username, setUsername] = useState("");
   const [websiteName, setWebsiteName] = useState(
-    templateSlug === "photo-album" ? "photo-album" : templateSlug === "birthday-template" ? "birthday" : "our-story",
+    templateSlug === "photo-album" ? "photo-album" : templateSlug === "birthday-template" ? "birthday" : templateSlug === "love-heart" ? "love-heart" : "our-story",
   );
   const [draftReady, setDraftReady] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -336,7 +344,9 @@ export function WebsiteEditor({
         onChange={(event) => void choosePhoto(event.currentTarget.files)}
       />
 
-      {isAlbum ? (
+      {templateSlug === "love-heart" ? (
+        <LoveHeartTemplate editing onExit={onClose} />
+      ) : isAlbum ? (
         <PhotoAlbumTemplate
           values={values}
           title={values.heading}
