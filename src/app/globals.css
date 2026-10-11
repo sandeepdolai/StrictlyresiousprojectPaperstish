@@ -207,9 +207,3 @@ html.paper-stish-viewer body {
   color: #555;
 }
 
-/* Fixed desktop HUD sizing avoids rem-based flashes while the fluid root size settles. */
-@media (min-width: 650px) {
-  .hud-corner-label {
-    font-size: clamp(11px, 0.8vw, 12px);
-  }
-}
