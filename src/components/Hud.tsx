@@ -15,10 +15,6 @@ interface HudProps {
 export function Hud({ view, overlay, onProfile, onSaved, onHome, onMy, onWebsiteTemplates }: HudProps) {
   const savedOpen = view === "saved";
 
-  // The account overlay has its own header and close action. Hiding the HUD
-  // here prevents duplicate navigation from competing with the modal on mobile.
-  if (overlay === "profile") return null;
-
   return (
     <div className="pointer-events-none fixed inset-0 z-40 flex flex-col justify-between px-40 py-25 s:px-80 s:py-40 text-white">
       <div className="flex items-start justify-between">
