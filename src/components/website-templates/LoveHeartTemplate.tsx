@@ -364,8 +364,6 @@ export function LoveHeartTemplate({
       timers.add(id);
     };
 
-    const SCALE = 21;
-    const OFFSET_Y = 20;
     const DURATION = 10;
     const TICK = 16;
     const ANIM = 42;
