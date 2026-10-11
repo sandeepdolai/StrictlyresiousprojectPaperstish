@@ -142,6 +142,7 @@ function MenuRow({
 export function ProfileOverlay({
   open,
   onMyProjects,
+  onMyTemplates,
   onSmartEdit,
   onAdminTemplates,
   onWebsiteTemplates,
