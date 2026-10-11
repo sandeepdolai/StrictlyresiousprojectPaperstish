@@ -21,8 +21,19 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 /** Empty until new curated starter templates are ready to publish. */
 export const FEATURED: Project[] = [];
 
-/** Empty until new curated website templates are ready to publish. */
-export const WEBSITE_TEMPLATES: Project[] = [];
+/** Curated website templates available in the website-template browser. */
+export const WEBSITE_TEMPLATES: Project[] = [
+  {
+    title: "Love Heart",
+    slug: "love-heart",
+    description: "A glowing heart formed from “I love you” in 20 languages, with a slow reveal and soft recurring shimmer.",
+    link: null,
+    tags: [],
+    awards: 0,
+    aspect: 1,
+    media: [`${BASE_PATH}/website-templates/love-heart-preview.svg`],
+  },
+];
 
 export interface IndexItem {
   title: string;

@@ -29,6 +29,7 @@ export const PUBLISHABLE_TEMPLATE_SLUGS = [
   "birthday-template",
   "love-of-my-life",
   "photo-album",
+  "love-heart",
 ] as const;
 
 export type PublishableTemplateSlug = (typeof PUBLISHABLE_TEMPLATE_SLUGS)[number];
