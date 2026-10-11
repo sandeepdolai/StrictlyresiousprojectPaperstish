@@ -5,7 +5,7 @@ import { App } from "@/components/App";
 
 export const metadata: Metadata = {
   title: "Website Templates | Paper Stish",
-  description: "Browse website templates in Paper Stish. Website editing is coming later.",
+  description: "Browse and customize website templates in Paper Stish.",
   robots: { index: false, follow: false },
 };
 
