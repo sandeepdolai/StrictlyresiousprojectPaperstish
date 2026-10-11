@@ -536,7 +536,6 @@ function AppContent({ folio, initialView }: { folio: Folio; initialView: View })
 
       <ProfileOverlay
         open={overlay === "profile"}
-        onClose={closeOverlay}
         onMyProjects={goMy}
         onSmartEdit={smartEditQuickAction}
         onAdminTemplates={createAdminTemplate}
