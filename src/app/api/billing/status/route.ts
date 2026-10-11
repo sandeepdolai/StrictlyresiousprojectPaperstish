@@ -3,6 +3,28 @@ import { requireUser, jsonError } from "@/lib/publicationServer";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // Before Dodo is set up, the account should calmly stay on Free instead of
+  // showing a retrying/error card or querying subscription columns that may
+  // not yet have been migrated in production.
+  const billingConfigured = Boolean(
+    process.env.DODO_PAYMENTS_API_KEY &&
+    process.env.DODO_PAYMENTS_PRODUCT_ID &&
+    process.env.DODO_PAYMENTS_WEBHOOK_KEY,
+  );
+
+  if (!billingConfigured) {
+    return Response.json(
+      {
+        isPremium: false,
+        status: "unconfigured",
+        billingConfigured: false,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+      },
+      { headers: { "Cache-Control": "no-store, max-age=0" } },
+    );
+  }
+
   try {
     const user = await requireUser();
     if (!user) return jsonError(401, "Sign in to check your subscription.");
@@ -16,6 +38,7 @@ export async function GET() {
       {
         isPremium,
         status: user.subscriptionStatus,
+        billingConfigured: true,
         currentPeriodEnd,
         cancelAtPeriodEnd: user.subscriptionCancelAtPeriodEnd,
       },
