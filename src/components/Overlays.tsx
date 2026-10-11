@@ -147,8 +147,16 @@ export function ProfileOverlay({
             <p className="label opacity-55">PAPER STISH</p>
             <h2 className="mt-7 truncate text-20 leading-20 tracking-[-0.04em]">Your account</h2>
           </div>
-          <div className="flex size-40 shrink-0 items-center justify-center rounded-full bg-white/10 text-white/80">
-            <UserIcon />
+          <div className="flex size-40 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-white/80">
+            {signedIn && session.user?.image ? (
+              <img
+                src={session.user.image}
+                alt={session.user.name ? `${session.user.name} account photo` : "Google account photo"}
+                className="size-full object-cover"
+              />
+            ) : (
+              <UserIcon />
+            )}
           </div>
         </div>
 
@@ -201,7 +209,7 @@ export function ProfileOverlay({
                     <p className="truncate text-15 leading-17 tracking-[-0.02em]">
                       {session.user?.name ?? "Paper Stish user"}
                     </p>
-                    <p className="mt-5 truncate text-12 leading-15 tracking-[-0.01em] text-white/50">
+                    <p className="mt-5 truncate text-13 leading-16 tracking-[-0.01em] text-white/60">
                       {session.user?.email ?? ""}
                     </p>
                   </div>
