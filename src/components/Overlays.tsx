@@ -165,37 +165,39 @@ export function ProfileOverlay({
     >
       <div
         data-reveal
-        className="pointer-events-auto w-full max-w-[24rem] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#101316]/95 text-white shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+        className="pointer-events-auto w-full max-w-[30rem] overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#101010]/96 text-white shadow-[0_24px_70px_rgba(0,0,0,0.58)] backdrop-blur-xl"
       >
-        <div className="flex items-center gap-10 px-18 pb-14 pt-18">
+        <div className="flex items-center gap-12 px-18 pb-14 pt-18">
           {signedIn ? (
             <>
-              <div className="flex size-38 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-white/80">
-                {session.user?.image ? (
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name ? `${session.user.name} account photo` : "Google account photo"}
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <span className="text-14">{(session.user?.name || session.user?.email || "P").slice(0, 1).toUpperCase()}</span>
-                )}
+              <div className="relative flex size-42 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#f2f0e8] via-[#bd82cf] to-[#d8c7e2] p-[2px] shadow-[0_0_20px_rgba(189,130,207,0.32)]">
+                <div className="flex size-full items-center justify-center overflow-hidden rounded-full bg-[#191919] text-white/85">
+                  {session.user?.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name ? `${session.user.name} account photo` : "Google account photo"}
+                      className="size-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-14">{(session.user?.name || session.user?.email || "P").slice(0, 1).toUpperCase()}</span>
+                  )}
+                </div>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-12 font-medium leading-15 tracking-[-0.02em]">
                   {session.user?.name ?? "Paper Stish user"}
                 </p>
-                <p className="mt-2 min-w-0 text-9 leading-12 text-white/50 [overflow-wrap:anywhere]">
+                <p className="mt-2 min-w-0 text-10 leading-13 text-white/55 [overflow-wrap:anywhere]">
                   {session.user?.email ?? ""}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => signIn("google", { prompt: "select_account" })}
+                  className="pointer-events-auto mt-4 text-9 text-white/55 underline decoration-white/20 underline-offset-3 transition-colors hover:text-white"
+                >
+                  Switch account
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => signIn("google", { prompt: "select_account" })}
-                className="pointer-events-auto shrink-0 text-9 text-white/55 underline decoration-white/20 underline-offset-3 transition-colors hover:text-white"
-              >
-                Switch account
-              </button>
             </>
           ) : (
             <>
@@ -246,22 +248,15 @@ export function ProfileOverlay({
             </>
           ) : (
             <>
-              <div data-reveal className="mb-10 rounded-[1.15rem] border border-white/[0.04] bg-[#25282c] p-14">
-                <div className="flex items-start gap-10">
-                  <div className="flex size-38 shrink-0 items-center justify-center rounded-full bg-[#f0f2f7] text-black">
-                    <SparkIcon />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-6">
-                      <span className="rounded-[4px] bg-white/15 px-5 py-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-white/75">Free</span>
-                    </div>
-                    <p className="mt-5 text-11 leading-14 text-white/80">Upgrade to Full Experience</p>
-                    <p className="mt-2 text-10 leading-13 text-white/55">$4.99 / month</p>
-                  </div>
+              <div data-reveal className="mb-10 rounded-[1.15rem] border border-white/[0.05] bg-[#242424] p-16">
+                <div>
+                  <span className="rounded-[4px] bg-white/15 px-5 py-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-white/75">Free</span>
+                  <p className="mt-7 text-11 leading-14 text-white/85">Upgrade to Full Experience</p>
+                  <p className="mt-3 text-10 leading-13 text-white/55">$4.99 / month</p>
                 </div>
                 <a
                   href="mailto:sandeepdolai.info@gmail.com?subject=Paper%20Stish%20Upgrade%20%28%244.99%2Fmonth%29"
-                  className="pointer-events-auto mt-12 flex h-34 w-full items-center justify-center rounded-full bg-[#e8edf9] px-16 text-11 font-medium text-[#101114] transition-transform duration-200 hover:brightness-105 active:scale-[0.99]"
+                  className="pointer-events-auto mt-12 flex h-36 w-full items-center justify-center rounded-full bg-[#f2f0e8] px-16 text-11 font-medium text-[#191919] transition-transform duration-200 hover:brightness-105 active:scale-[0.99]"
                 >
                   Upgrade
                 </a>
