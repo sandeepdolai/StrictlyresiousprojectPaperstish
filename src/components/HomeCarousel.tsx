@@ -4,7 +4,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import type { Folio, Rect } from "@/gl/scene";
-import { loadCardTexture } from "@/gl/textures";
+import { loadCardTexture, type CardTexture } from "@/gl/textures";
 import { ease, tween } from "@/gl/react";
 import { FEATURED, type Project } from "@/lib/projects";
 
@@ -39,6 +39,97 @@ function wrap(min: number, max: number, value: number) {
   return ((((value - min) % range) + range) % range) + min;
 }
 
+// A failed preview must not leave the entire WebGL home screen black.
+// Remote previews have a finite timeout; failed assets get a neutral branded
+// card texture while the rest of the carousel continues to load.
+function loadCardTextureWithTimeout(src: string, timeoutMs = 7000): Promise<CardTexture> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error("Preview image timed out."));
+    }, timeoutMs);
+
+    loadCardTexture(src).then(
+      (texture) => {
+        if (settled) {
+          texture.dispose();
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timer);
+        resolve(texture);
+      },
+      (error: unknown) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
+function createFallbackCardTexture(title: string): CardTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 1200;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#eee8dc");
+    gradient.addColorStop(1, "#c9c0b2");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "rgba(20, 20, 20, 0.52)";
+    ctx.font = "500 24px Arial, sans-serif";
+    ctx.fillText("PAPER STISH", 58, 74);
+
+    ctx.strokeStyle = "rgba(20, 20, 20, 0.13)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(58, 108);
+    ctx.lineTo(842, 108);
+    ctx.stroke();
+
+    ctx.fillStyle = "#171614";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "600 76px Arial, sans-serif";
+    const words = title.trim().split(/\\s+/).filter(Boolean);
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(candidate).width > 760) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = candidate;
+      }
+    }
+    if (line) lines.push(line);
+    const visibleLines = lines.slice(0, 5);
+    const lineHeight = 92;
+    const startY = 600 - ((visibleLines.length - 1) * lineHeight) / 2;
+    visibleLines.forEach((text, index) => {
+      ctx.fillText(text, canvas.width / 2, startY + index * lineHeight, 760);
+    });
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  return {
+    texture,
+    size: new THREE.Vector2(canvas.width, canvas.height),
+    dispose: () => texture.dispose(),
+  };
+}
+
 export function HomeCarousel({ folio, enabled, returning, onSelect, hidden, apiRef, projects = FEATURED }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -59,24 +150,34 @@ export function HomeCarousel({ folio, enabled, returning, onSelect, hidden, apiR
       const track = trackRef.current;
       if (!track) return;
 
-      // load textures + register GL cards
-      for (const p of projects) {
+      // Keep the environment visible while preview assets are loading.
+      folio.showGround(true);
+      folio.showVeil(true);
+
+      // Load all previews concurrently. One slow or broken image must not
+      // block every card; it gets a local canvas placeholder after timeout.
+      await Promise.all(projects.map(async (p) => {
         if (disposed) return;
         const el = track.querySelector<HTMLElement>(`[data-id="${p.slug}"]`);
-        if (!el) continue;
-        try {
-          const tex = await loadCardTexture(p.media[0]);
-          if (disposed) {
-            tex.dispose();
-            return;
-          }
-          folio.registerCard(el, tex.texture, p.slug, tex.size);
-          alphaRef.current.set(p.slug, 0);
-        } catch {
-          // ignore — card just won't render
-        }
-      }
+        if (!el) return;
 
+        let tex: CardTexture;
+        try {
+          tex = await loadCardTextureWithTimeout(p.media[0]);
+        } catch {
+          tex = createFallbackCardTexture(p.title);
+        }
+
+        if (disposed) {
+          tex.dispose();
+          return;
+        }
+
+        folio.registerCard(el, tex.texture, p.slug, tex.size);
+        alphaRef.current.set(p.slug, 0);
+      }));
+
+      if (disposed) return;
       measure();
 
       // rise-in choreography
