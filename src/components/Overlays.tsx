@@ -180,7 +180,7 @@ export function ProfileOverlay({
                 Continue with Google
               </button>
             </div>
-              <div data-reveal className="mt-10">
+              <div data-reveal className="mt-14">
                 <ProfileAction icon={<SparkIcon />} onClick={onWebsiteTemplates}>
                   Website Templates
                 </ProfileAction>
@@ -208,13 +208,13 @@ export function ProfileOverlay({
                 </div>
               </div>
 
-              <div data-reveal className="mb-10">
+              <div data-reveal className="mt-14 mb-12">
                 <ProfileAction icon={<SparkIcon />} onClick={onWebsiteTemplates}>
                   Website Templates
                 </ProfileAction>
               </div>
 
-              <div data-reveal className="mt-10 flex flex-col gap-8">
+              <div data-reveal className="mt-0 flex flex-col gap-12">
                 <ProfileAction icon={<SparkIcon />} onClick={onSmartEdit}>Smart Edit</ProfileAction>
                 {isAdminEmail(session.user?.email) && (
                   <ProfileAction icon={<SparkIcon />} onClick={onAdminTemplates}>Admin Templates</ProfileAction>
