@@ -53,6 +53,20 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <style>{`
+          /* Critical root sizing: apply before the page's first paint so rem-based
+             interface text does not flash at the browser's default font size. */
+          :root {
+            --size: 390;
+          }
+          @media (min-width: 650px) {
+            :root {
+              --size: 1500;
+            }
+          }
+          html {
+            font-size: clamp(5px, calc(100vw * 10 / var(--size)), 20px);
+          }
+
           @font-face {
             font-display: swap;
             font-family: sans;

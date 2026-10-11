@@ -14,6 +14,8 @@
 @theme {
   --spacing: 0.1rem;
   --text-8: 0.8rem;
+  --text-10: 1rem;
+  --text-12: 1.2rem;
   --text-14: 1.4rem;
   --text-16: 1.6rem;
   --text-18: 1.8rem;
@@ -42,7 +44,7 @@
   }
 
   html {
-    font-size: clamp(5px, 20px, 10 * 100vw / var(--size));
+    font-size: clamp(5px, calc(100vw * 10 / var(--size)), 20px);
     -webkit-text-size-adjust: none;
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
