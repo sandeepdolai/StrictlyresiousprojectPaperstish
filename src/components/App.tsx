@@ -428,9 +428,11 @@ function AppContent({ folio, initialView }: { folio: Folio; initialView: View })
   }, [view, overlay, closeOverlay, wipeTo]);
 
   const goSaved = useCallback(() => {
-    if (busy.current || overlay || (view !== "home" && view !== "my" && view !== "website-templates")) return;
+    if (busy.current || (view !== "home" && view !== "my" && view !== "saved" && view !== "website-templates")) return;
+    if (overlay) closeOverlay();
+    if (view === "saved") return;
     wipeTo("saved");
-  }, [view, overlay, wipeTo]);
+  }, [view, overlay, closeOverlay, wipeTo]);
 
   return (
     <>
@@ -537,6 +539,7 @@ function AppContent({ folio, initialView }: { folio: Folio; initialView: View })
       <ProfileOverlay
         open={overlay === "profile"}
         onMyProjects={goMy}
+        onMyTemplates={goSaved}
         onSmartEdit={smartEditQuickAction}
         onAdminTemplates={createAdminTemplate}
         onWebsiteTemplates={goWebsiteTemplates}
