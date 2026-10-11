@@ -154,7 +154,8 @@ export function ProfileOverlay({
 
         <div className="px-15 pb-15 s:px-20 s:pb-20">
           {!signedIn ? (
-            <div data-reveal className="rounded-[1.55rem] bg-[#272727] p-20 s:p-25">
+            <>
+              <div data-reveal className="rounded-[1.55rem] bg-[#272727] p-20 s:p-25">
               <div className="flex items-start gap-12">
                 <div className="flex size-38 shrink-0 items-center justify-center rounded-full bg-white text-black">
                   <svg viewBox="0 0 24 24" className="size-17" aria-hidden="true">
@@ -179,11 +180,12 @@ export function ProfileOverlay({
                 Continue with Google
               </button>
             </div>
-            <div data-reveal className="mt-10">
-              <ProfileAction icon={<SparkIcon />} onClick={onWebsiteTemplates}>
-                Website Templates
-              </ProfileAction>
-            </div>
+              <div data-reveal className="mt-10">
+                <ProfileAction icon={<SparkIcon />} onClick={onWebsiteTemplates}>
+                  Website Templates
+                </ProfileAction>
+              </div>
+            </>
           ) : (
             <>
               <div data-reveal className="rounded-[1.55rem] bg-[#272727] p-20 s:p-25">
