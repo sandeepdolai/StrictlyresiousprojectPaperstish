@@ -156,6 +156,98 @@ export function ProfileOverlay({
   const { ref, visible } = useReveal(open);
   const { data: session, status } = useSession();
   const signedIn = status === "authenticated" && !!session?.user;
+  const [billingStatus, setBillingStatus] = useState({
+    loaded: false,
+    isPremium: false,
+    cancelAtPeriodEnd: false,
+    currentPeriodEnd: null as string | null,
+  });
+  const [billingAction, setBillingAction] = useState<"checkout" | "portal" | null>(null);
+  const [billingError, setBillingError] = useState<string | null>(null);
+
+  // Poll only while the account menu is open so the card switches as soon as
+  // the verified Dodo webhook updates the account in the database.
+  useEffect(() => {
+    if (!open || !signedIn) {
+      if (!signedIn) {
+        setBillingStatus({
+          loaded: false,
+          isPremium: false,
+          cancelAtPeriodEnd: false,
+          currentPeriodEnd: null,
+        });
+        setBillingError(null);
+      }
+      return;
+    }
+
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/billing/status", { cache: "no-store" });
+        if (!response.ok) throw new Error("Could not verify the subscription.");
+        const result = await response.json() as {
+          isPremium?: boolean;
+          cancelAtPeriodEnd?: boolean;
+          currentPeriodEnd?: string | null;
+        };
+        if (cancelled) return;
+        setBillingStatus({
+          loaded: true,
+          isPremium: result.isPremium === true,
+          cancelAtPeriodEnd: result.cancelAtPeriodEnd === true,
+          currentPeriodEnd: typeof result.currentPeriodEnd === "string" ? result.currentPeriodEnd : null,
+        });
+        setBillingError(null);
+      } catch {
+        if (!cancelled) setBillingError("Could not verify your subscription right now. Retrying…");
+      }
+    };
+
+    void refresh();
+    const interval = window.setInterval(() => void refresh(), 5000);
+    const onFocus = () => void refresh();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [open, signedIn]);
+
+  const beginCheckout = async () => {
+    if (billingAction) return;
+    setBillingAction("checkout");
+    setBillingError(null);
+    try {
+      const response = await fetch("/api/billing/checkout", { method: "POST" });
+      const result = await response.json() as { checkoutUrl?: string; error?: string };
+      if (!response.ok || !result.checkoutUrl) {
+        throw new Error(result.error || "Could not start checkout. Please try again.");
+      }
+      window.location.assign(result.checkoutUrl);
+    } catch (error) {
+      setBillingError(error instanceof Error ? error.message : "Could not start checkout. Please try again.");
+      setBillingAction(null);
+    }
+  };
+
+  const openBillingPortal = async () => {
+    if (billingAction) return;
+    setBillingAction("portal");
+    setBillingError(null);
+    try {
+      const response = await fetch("/api/billing/portal", { method: "POST" });
+      const result = await response.json() as { url?: string; error?: string };
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || "Could not open subscription management.");
+      }
+      window.location.assign(result.url);
+    } catch (error) {
+      setBillingError(error instanceof Error ? error.message : "Could not open subscription management.");
+      setBillingAction(null);
+    }
+  };
 
   return (
     <div
@@ -248,18 +340,54 @@ export function ProfileOverlay({
             </>
           ) : (
             <>
-              <div data-reveal className="mb-10 rounded-[1.15rem] border border-white/[0.05] bg-[#242424] p-16">
-                <div>
-                  <span className="rounded-[4px] bg-white/15 px-5 py-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-white/75">Free</span>
-                  <p className="mt-7 text-11 leading-14 text-white/85">Upgrade to Full Experience</p>
-                  <p className="mt-3 text-10 leading-13 text-white/55">$4.99 / month</p>
-                </div>
-                <a
-                  href="mailto:sandeepdolai.info@gmail.com?subject=Paper%20Stish%20Upgrade%20%28%244.99%2Fmonth%29"
-                  className="pointer-events-auto mt-12 flex h-36 w-full items-center justify-center rounded-full bg-[#f2f0e8] px-16 text-11 font-medium text-[#191919] transition-transform duration-200 hover:brightness-105 active:scale-[0.99]"
-                >
-                  Upgrade
-                </a>
+              <div data-reveal aria-live="polite" className="mb-10 rounded-[1.15rem] border border-white/[0.05] bg-[#242424] p-16">
+                {!billingStatus.loaded ? (
+                  <p className="py-8 text-10 leading-14 text-white/65">
+                    {billingError ?? "Checking subscription…"}
+                  </p>
+                ) : billingStatus.isPremium ? (
+                  <>
+                    <div className="flex items-center gap-8">
+                      <svg viewBox="0 0 24 24" className="size-16 shrink-0 text-[#d8c7e2]" fill="currentColor" aria-hidden="true">
+                        <path d="M5 19h14l1.4-9-4.4 3-4-7-4 7-4.4-3L5 19Zm2 2h10v1H7v-1Z"/>
+                      </svg>
+                      <span className="rounded-[4px] bg-white/15 px-5 py-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-white/85">
+                        Full Experience
+                      </span>
+                    </div>
+                    <p className="mt-7 text-10 leading-13 text-white/60">$4.99 / month</p>
+                    {billingStatus.cancelAtPeriodEnd && billingStatus.currentPeriodEnd && (
+                      <p className="mt-4 text-9 leading-12 text-white/50">
+                        Active until {new Date(billingStatus.currentPeriodEnd).toLocaleDateString()}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => void openBillingPortal()}
+                      disabled={billingAction !== null}
+                      className="pointer-events-auto mt-12 flex h-36 w-full items-center justify-center rounded-full bg-[#f2f0e8] px-16 text-11 font-medium text-[#191919] transition-transform duration-200 hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {billingAction === "portal" ? "Opening…" : "Manage subscription"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="rounded-[4px] bg-white/15 px-5 py-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-white/75">Free</span>
+                    <p className="mt-7 text-11 leading-14 text-white/85">Upgrade to Full Experience</p>
+                    <p className="mt-3 text-10 leading-13 text-white/55">$4.99 / month</p>
+                    <button
+                      type="button"
+                      onClick={() => void beginCheckout()}
+                      disabled={billingAction !== null}
+                      className="pointer-events-auto mt-12 flex h-36 w-full items-center justify-center rounded-full bg-[#f2f0e8] px-16 text-11 font-medium text-[#191919] transition-transform duration-200 hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {billingAction === "checkout" ? "Opening checkout…" : "Upgrade"}
+                    </button>
+                  </>
+                )}
+                {billingError && billingStatus.loaded && (
+                  <p role="alert" className="mt-8 text-9 leading-12 text-white/60">{billingError}</p>
+                )}
               </div>
 
               <nav data-reveal aria-label="Account actions" className="overflow-hidden rounded-[0.9rem]">

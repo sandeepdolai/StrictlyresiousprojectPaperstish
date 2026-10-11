@@ -19,6 +19,16 @@ model User {
   name         String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  // Dodo Payments subscription state. Only verified webhooks update these fields.
+  subscriptionStatus          String    @default("free")
+  dodoSubscriptionId          String?   @unique
+  dodoCustomerId              String?
+  subscriptionProductId       String?
+  subscriptionPeriodEnd       DateTime?
+  subscriptionCancelAtPeriodEnd Boolean @default(false)
+  subscriptionEventAt         DateTime?
+
   publications Publication[]
 }
 
@@ -86,4 +96,12 @@ model CommunityTemplate {
   updatedAt       DateTime @updatedAt
 
   @@index([published, publishedAt])
+}
+
+
+model DodoWebhookEvent {
+  // Dodo's webhook-id header; primary key makes redeliveries idempotent.
+  id          String   @id
+  eventType   String
+  processedAt DateTime @default(now())
 }
