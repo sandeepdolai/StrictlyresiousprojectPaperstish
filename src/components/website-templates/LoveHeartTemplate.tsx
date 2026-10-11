@@ -353,6 +353,8 @@ export function LoveHeartTemplate({
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d", { alpha: false });
     if (!canvas || !ctx) return;
+    // Capture the narrowed context in a non-null constant for nested callbacks.
+    const context: CanvasRenderingContext2D = ctx;
 
     let disposed = false;
     const timers = new Set<number>();
@@ -371,14 +373,14 @@ export function LoveHeartTemplate({
     const FLASH = [1, 0.78, 0.78];
     const rng = new PythonRandom(11);
 
-    ctx.fillStyle = BG;
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    context.fillStyle = BG;
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+    context.textAlign = "center";
+    context.textBaseline = "middle";
 
     const fontPx = (size: number) => (size * 4) / 3;
     const fontString = (size: number) => `bold ${fontPx(size)}px Arial, sans-serif`;
-    const order = buildLayout(ctx, rng);
+    const order = buildLayout(context, rng);
     const bgColor = [1, 3, 5].map((i) => parseInt(BG.slice(i, i + 2), 16) / 255);
     const mainIds: { item: DrawItem; color: RGB }[] = [];
     const active: PhraseItem[] = [];
@@ -461,19 +463,19 @@ export function LoveHeartTemplate({
     }
 
     function render() {
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.fillStyle = BG;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-      ctx.save();
-      ctx.translate(WIDTH / 2, HEIGHT / 2);
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.fillStyle = BG;
+      context.fillRect(0, 0, WIDTH, HEIGHT);
+      context.save();
+      context.translate(WIDTH / 2, HEIGHT / 2);
+      context.textAlign = "center";
+      context.textBaseline = "middle";
       for (const item of drawItems) {
-        ctx.font = item.font;
-        ctx.fillStyle = item.fill;
-        ctx.fillText(item.text, item.x, item.y);
+        context.font = item.font;
+        context.fillStyle = item.fill;
+        context.fillText(item.text, item.x, item.y);
       }
-      ctx.restore();
+      context.restore();
     }
 
     function shimmer() {
