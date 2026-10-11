@@ -70,7 +70,6 @@ function hasOnlyDurableImageReferences(
     const entry = assets[layer.assetId ?? ""];
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
     const record = entry as Record<string, unknown>;
-    if (record.type !== layer.type) return false;
     if (record.provider === "local") return false;
     if (record.provider !== "bundled" && record.provider !== "cloudinary") return false;
     if (record.provider === "cloudinary") {
