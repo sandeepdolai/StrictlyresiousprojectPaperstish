@@ -216,7 +216,27 @@ export function ProfileOverlay({
                 </div>
               </div>
 
-              <div data-reveal className="mt-14 mb-12">
+              <div data-reveal className="mt-14 mb-12 rounded-[1.55rem] bg-[#272727] p-20 s:p-25">
+                <div className="flex items-start gap-12">
+                  <div className="flex size-48 shrink-0 items-center justify-center rounded-full bg-white text-black">
+                    <SparkIcon />
+                  </div>
+                  <div className="min-w-0 pt-2">
+                    <p className="text-15 leading-17 tracking-[-0.02em]">Free</p>
+                    <p className="mt-5 text-12 leading-15 tracking-[-0.01em] text-white/50">
+                      Upgrade to unlock the full Paper Stish experience.
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="mailto:sandeepdolai.info@gmail.com?subject=Paper%20Stish%20Upgrade"
+                  className="pointer-events-auto mt-18 flex h-48 w-full items-center justify-center rounded-full bg-white px-20 text-14 tracking-[-0.02em] text-black transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  Upgrade
+                </a>
+              </div>
+
+              <div data-reveal className="mt-0 mb-12">
                 <ProfileAction icon={<SparkIcon />} onClick={onWebsiteTemplates}>
                   Website Templates
                 </ProfileAction>
@@ -252,7 +272,7 @@ export function ProfileOverlay({
             <a href="mailto:sandeepdolai.info@gmail.com" className="transition-opacity hover:text-white">Support</a>
           </nav>
           <p className="text-10 font-medium tracking-[-0.01em] text-white/35">
-            Making something personal should feel simple.
+            Making someone else happy is one of the best feelings.
           </p>
         </div>
       </div>
