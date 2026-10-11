@@ -209,7 +209,7 @@ export function ProfileOverlay({
                     <p className="truncate text-15 leading-17 tracking-[-0.02em]">
                       {session.user?.name ?? "Paper Stish user"}
                     </p>
-                    <p className="mt-5 truncate text-13 leading-16 tracking-[-0.01em] text-white/60">
+                    <p className="mt-5 min-w-0 text-12 leading-15 tracking-[-0.01em] text-white/60 [overflow-wrap:anywhere]">
                       {session.user?.email ?? ""}
                     </p>
                   </div>
