@@ -159,6 +159,7 @@ export function ProfileOverlay({
   const [billingStatus, setBillingStatus] = useState({
     loaded: false,
     isPremium: false,
+    checkoutEnabled: false,
     cancelAtPeriodEnd: false,
     currentPeriodEnd: null as string | null,
   });
@@ -173,6 +174,7 @@ export function ProfileOverlay({
         setBillingStatus({
           loaded: false,
           isPremium: false,
+          checkoutEnabled: false,
           cancelAtPeriodEnd: false,
           currentPeriodEnd: null,
         });
@@ -188,6 +190,7 @@ export function ProfileOverlay({
         if (!response.ok) throw new Error("Could not verify the subscription.");
         const result = await response.json() as {
           isPremium?: boolean;
+          billingConfigured?: boolean;
           cancelAtPeriodEnd?: boolean;
           currentPeriodEnd?: string | null;
         };
@@ -195,6 +198,7 @@ export function ProfileOverlay({
         setBillingStatus({
           loaded: true,
           isPremium: result.isPremium === true,
+          checkoutEnabled: result.billingConfigured === true,
           cancelAtPeriodEnd: result.cancelAtPeriodEnd === true,
           currentPeriodEnd: typeof result.currentPeriodEnd === "string" ? result.currentPeriodEnd : null,
         });
@@ -375,13 +379,18 @@ export function ProfileOverlay({
                     <span className="rounded-[4px] bg-white/15 px-5 py-1 text-[8px] font-semibold uppercase tracking-[0.08em] text-white/75">Free</span>
                     <p className="mt-7 text-11 leading-14 text-white/85">Upgrade to Full Experience</p>
                     <p className="mt-3 text-10 leading-13 text-white/55">$4.99 / month</p>
+                    {!billingStatus.checkoutEnabled && (
+                      <p className="mt-5 text-9 leading-12 text-white/45">
+                        Subscriptions coming soon.
+                      </p>
+                    )}
                     <button
                       type="button"
                       onClick={() => void beginCheckout()}
-                      disabled={billingAction !== null}
-                      className="pointer-events-auto mt-12 flex h-36 w-full items-center justify-center rounded-full bg-[#f2f0e8] px-16 text-11 font-medium text-[#191919] transition-transform duration-200 hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
+                      disabled={billingAction !== null || !billingStatus.checkoutEnabled}
+                      className="pointer-events-auto mt-12 flex h-36 w-full items-center justify-center rounded-full bg-[#f2f0e8] px-16 text-11 font-medium text-[#191919] transition-transform duration-200 hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55"
                     >
-                      {billingAction === "checkout" ? "Opening checkout…" : "Upgrade"}
+                      {billingAction === "checkout" ? "Opening checkout…" : billingStatus.checkoutEnabled ? "Upgrade" : "Coming soon"}
                     </button>
                   </>
                 )}
