@@ -90,9 +90,9 @@ async function listDynamicFolderAssets() {
     // the result set further if Cloudinary returns asset_folder metadata.
     for (const resource of resources) {
       if (
-        typeof resource.asset_folder === "string" &&
-        (resource.asset_folder === "paper-stish/templates" ||
-          resource.asset_folder.startsWith(PREFIX))
+        typeof resource.asset_folder !== "string" ||
+        resource.asset_folder === "paper-stish/templates" ||
+        resource.asset_folder.startsWith(PREFIX)
       ) {
         found.push(resource);
       }
