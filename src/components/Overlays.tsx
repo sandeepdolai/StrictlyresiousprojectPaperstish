@@ -145,7 +145,9 @@ export function ProfileOverlay({
         <div className="flex items-center justify-between px-25 pb-18 pt-25 s:px-30 s:pb-20 s:pt-30">
           <div className="min-w-0">
             <p className="label opacity-55">PAPER STISH</p>
-            <h2 className="mt-7 truncate text-20 leading-20 tracking-[-0.04em]">Your account</h2>
+            <h2 className="mt-7 min-w-0 text-13 leading-16 tracking-[-0.02em] [overflow-wrap:anywhere]">
+              {signedIn ? session.user?.email ?? "Your account" : "Your account"}
+            </h2>
           </div>
           <div className="flex size-40 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-white/80">
             {signedIn && session.user?.image ? (
@@ -196,26 +198,6 @@ export function ProfileOverlay({
             </>
           ) : (
             <>
-              <div data-reveal className="rounded-[1.55rem] bg-[#272727] p-20 s:p-25">
-                <div className="flex items-center gap-12">
-                  <div className="size-38 shrink-0 overflow-hidden rounded-full bg-white/10">
-                    {session.user?.image ? (
-                      <img src={session.user.image} alt="" className="size-full object-cover" />
-                    ) : (
-                      <div className="flex size-full items-center justify-center"><UserIcon /></div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-15 leading-17 tracking-[-0.02em]">
-                      {session.user?.name ?? "Paper Stish user"}
-                    </p>
-                    <p className="mt-5 min-w-0 text-12 leading-15 tracking-[-0.01em] text-white/60 [overflow-wrap:anywhere]">
-                      {session.user?.email ?? ""}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               <div data-reveal className="mt-14 mb-12 rounded-[1.55rem] bg-[#272727] p-20 s:p-25">
                 <div className="flex items-start gap-12">
                   <div className="flex size-48 shrink-0 items-center justify-center rounded-full bg-white text-black">
