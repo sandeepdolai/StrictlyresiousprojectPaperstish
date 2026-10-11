@@ -60,6 +60,10 @@ export default function RootLayout({
             font-weight: 200 1000;
             src: url(${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/fonts/ABCDiatypePlusVariable.woff2) format("woff2-variations");
           }
+          /* Apply corner-label sizing before first paint to prevent a large-text flash. */
+          @media (min-width: 650px) {
+            .hud-corner-label { font-size: 12px !important; }
+          }
         `}</style>
       </head>
       <body className="antialiased bg-black text-white">{children}</body>
