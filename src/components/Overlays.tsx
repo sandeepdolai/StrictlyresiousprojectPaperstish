@@ -142,6 +142,7 @@ function ProfileAction({
 
 export function ProfileOverlay({
   open,
+  onClose,
   onMyProjects,
   onSmartEdit,
   onAdminTemplates,
