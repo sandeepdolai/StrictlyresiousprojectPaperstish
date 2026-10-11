@@ -24,7 +24,7 @@ export function Hud({ view, overlay, onProfile, onSaved, onHome, onMy, onWebsite
             e.preventDefault();
             onHome();
           }}
-          className="label pointer-events-auto cursor-pointer relative s:text-[1.2rem]"
+          className="label pointer-events-auto cursor-pointer relative hud-corner-label"
         >
           {SITE.name}
         </a>
@@ -32,13 +32,13 @@ export function Hud({ view, overlay, onProfile, onSaved, onHome, onMy, onWebsite
           type="button"
           aria-expanded={overlay === "profile"}
           onClick={onProfile}
-          className="label pointer-events-auto s:text-[1.2rem] transition-opacity duration-300 ease-out hover:opacity-60"
+          className="label pointer-events-auto hud-corner-label transition-opacity duration-300 ease-out hover:opacity-60"
         >
           {overlay === "profile" ? "Close" : "Profile"}
         </button>
       </div>
       <div className="relative flex justify-start">
-        <nav className="label relative pointer-events-auto flex gap-x-5 s:text-[1.2rem]" aria-label="Paper Stish views">
+        <nav className="label relative pointer-events-auto flex gap-x-5 hud-corner-label" aria-label="Paper Stish views">
           <a
             href="#"
             aria-current={view === "home" || view === "project" ? "page" : undefined}
@@ -86,7 +86,7 @@ export function Hud({ view, overlay, onProfile, onSaved, onHome, onMy, onWebsite
           type="button"
           aria-expanded={savedOpen}
           onClick={savedOpen ? onHome : onSaved}
-          className="label pointer-events-auto absolute bottom-0 right-0 s:text-[1.2rem] transition-opacity duration-300 ease-out hover:opacity-60"
+          className="label pointer-events-auto absolute bottom-0 right-0 hud-corner-label transition-opacity duration-300 ease-out hover:opacity-60"
         >
           {savedOpen ? "Close" : "Saved Templates"}
         </button>
