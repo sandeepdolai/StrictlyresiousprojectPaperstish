@@ -365,7 +365,7 @@ export function SmartEditPublishWebsiteDialog({
             <div className="rounded-[12px] bg-white p-10">
               <img
                 src={qrCodeUrl}
-                alt={`QR code for ${published.title}`}
+                alt={`QR code for ${published.viewerName}`}
                 width={240}
                 height={240}
                 className="block h-auto w-[240px] max-w-full"
