@@ -56,6 +56,9 @@ export function SmartEditPublishWebsiteDialog({
   const [published, setPublished] = useState<PublishedRecord | null>(null);
   const [copyError, setCopyError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(false);
+  const [qrDownloading, setQrDownloading] = useState(false);
+  const [qrError, setQrError] = useState("");
   const [localSaveWarning, setLocalSaveWarning] = useState(false);
   const uploads = useRef(new Map<string, CloudinaryUpload>());
 
@@ -83,6 +86,8 @@ export function SmartEditPublishWebsiteDialog({
     setError("");
     setCopyError("");
     setCopied(false);
+    setShowQrCode(false);
+    setQrError("");
 
     try {
       const current = useEditorStore.getState();
@@ -295,6 +300,34 @@ export function SmartEditPublishWebsiteDialog({
     }
   };
 
+  const qrCodeUrl = published
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&margin=12&data=${encodeURIComponent(published.url)}`
+    : "";
+
+  const downloadQrCode = async () => {
+    if (!published || !qrCodeUrl || qrDownloading) return;
+    setQrDownloading(true);
+    setQrError("");
+    try {
+      const response = await fetch(qrCodeUrl);
+      if (!response.ok) throw new Error("QR code download failed.");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `${slugPart(published.viewerName, "website")}-qr-code.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      setQrError("Your browser could not download the QR image directly. Open the QR image and save it from your browser instead.");
+      window.open(qrCodeUrl, "_blank", "noopener,noreferrer");
+    } finally {
+      setQrDownloading(false);
+    }
+  };
+
   const body = published ? (
     <div className="grid gap-14">
       <p className="text-13 leading-19 text-white/65">
@@ -310,6 +343,47 @@ export function SmartEditPublishWebsiteDialog({
           className="w-full rounded-[13px] border border-white/10 bg-white/5 px-12 py-11 text-12 text-white outline-none focus:border-white/30"
         />
       </label>
+      <div className="rounded-[13px] border border-white/10 bg-white/[0.03] p-12">
+        <div className="flex items-center justify-between gap-10">
+          <div className="min-w-0">
+            <p className="text-12 text-white">QR code</p>
+            <p className="mt-4 text-10 leading-15 text-white/45">Scan to open your published website.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setShowQrCode((visible) => !visible);
+              setQrError("");
+            }}
+            className="shrink-0 rounded-full border border-white/15 px-12 py-8 text-11 text-white transition-colors hover:bg-white/10"
+          >
+            {showQrCode ? "Hide QR code" : "Generate QR code"}
+          </button>
+        </div>
+        {showQrCode && (
+          <div className="mt-12 grid justify-items-center gap-10">
+            <div className="rounded-[12px] bg-white p-10">
+              <img
+                src={qrCodeUrl}
+                alt={`QR code for ${published.title}`}
+                width={240}
+                height={240}
+                className="block h-auto w-[240px] max-w-full"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => void downloadQrCode()}
+              disabled={qrDownloading}
+              className="h-40 w-full rounded-full bg-white text-11 text-black transition-opacity hover:opacity-85 disabled:opacity-50"
+            >
+              {qrDownloading ? "Preparing download…" : "Download QR code (PNG)"}
+            </button>
+            {qrError && <p role="status" className="text-10 leading-15 text-[#f1c27a]">{qrError}</p>}
+            <p className="text-center text-9 leading-13 text-white/35">The code points to your public link. Anyone who scans it can open your website.</p>
+          </div>
+        )}
+      </div>
       {localSaveWarning && (
         <p className="text-11 leading-16 text-[#f1c27a]">
           The website was published, but its link could not be saved with this local project. Copy the link now.
