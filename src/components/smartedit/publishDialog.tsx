@@ -13,9 +13,9 @@
    touched), and only the final Publish action uploads anything:
 
      local assets  ──once──▶ Cloudinary paper-stish/templates/<project>/
-                       └─ fallback: self-contained data urls (no Cloudinary)
-     selected preview ──once──▶ Cloudinary / data url
+     selected preview ──once──▶ Cloudinary
      POST /api/templates  ──▶  metadata + document + asset references
+     any missing/failed upload ──X──▶ publication blocked
 
    Merely opening/closing the dialog uploads nothing. A failed publish
    never creates a half-published template and can be retried safely —
@@ -29,7 +29,6 @@ import { type AssetRecord, type SmartEditDocument, isImageLike } from "./types";
 import {
   assetBlob,
   assetDataUrl,
-  blobToDataUrl,
   cloudinaryConfig,
   preparePreviewImage,
   resolvePublicPath,
@@ -43,6 +42,8 @@ import { ModalShell, SheetShell } from "./editor-ui";
 
 const DESCRIPTION_MAX_CHARS = 500;
 const TITLE_MAX_CHARS = 120;
+const CLOUDINARY_REQUIRED_MESSAGE =
+  "Cloudinary is not configured. Set NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET in Vercel, then redeploy before publishing templates.";
 /** Preview render target — the exact document at a thumbnail-sane size. */
 const PREVIEW_MAX_EDGE = 1350;
 
@@ -193,16 +194,31 @@ export function PublishTemplateDialog({ projectId, onClose, onPublished }: Props
 
   const templateFolder = `paper-stish/templates/${projectId}`;
 
-  /** Upload a LOCAL template asset to Cloudinary once per dialog session;
-   *  returns null when Cloudinary is not configured (data-url fallback). */
+  /** Upload an image asset to Cloudinary once per dialog session.
+   *  Existing public library / Cloudinary URLs are reused; data/blob URLs
+   *  are uploaded instead of being persisted in the template document. */
   const uploadAssetOnce = useCallback(
-    async (record: AssetRecord): Promise<CloudinaryUpload | null> => {
+    async (record: AssetRecord): Promise<CloudinaryUpload> => {
       const cloud = cloudinaryConfig();
-      if (!cloud) return null;
+      if (!cloud) throw new Error(CLOUDINARY_REQUIRED_MESSAGE);
       const cached = assetUploads.current.get(record.id);
       if (cached) return cached;
-      const blob = await assetBlob(record.id);
-      if (!blob) return null;
+
+      let blob = await assetBlob(record.id);
+      if (!blob && record.url && /^(?:data:|blob:)/i.test(record.url)) {
+        try {
+          const response = await fetch(record.url);
+          if (response.ok) blob = await response.blob();
+        } catch {
+          // Report a clear error below if the source bytes are unavailable.
+        }
+      }
+      if (!blob) {
+        throw new Error(
+          `The image "${record.name}" is not available for Cloudinary upload. Re-add it and try publishing again.`,
+        );
+      }
+
       const remote = await uploadToCloudinary(blob, cloud, templateFolder);
       assetUploads.current.set(record.id, remote);
       return remote;
@@ -210,20 +226,18 @@ export function PublishTemplateDialog({ projectId, onClose, onPublished }: Props
     [templateFolder],
   );
 
-  /** Upload the selected preview once; without Cloudinary the exact render
-   *  is stored as a self-contained data url so the template still has one. */
+  /** Template previews must live on Cloudinary; never embed image bytes in
+   *  the published template record. */
   const uploadPreviewOnce = useCallback(
     async (blob: Blob, key: string): Promise<{ url: string; publicId: string | null }> => {
       const cached = previewUploads.current.get(key);
       if (cached) return cached;
       const cloud = cloudinaryConfig();
-      if (cloud) {
-        const remote = await uploadToCloudinary(blob, cloud, templateFolder);
-        const result = { url: remote.url, publicId: remote.publicId };
-        previewUploads.current.set(key, result);
-        return result;
-      }
-      return { url: await blobToDataUrl(blob), publicId: null };
+      if (!cloud) throw new Error(CLOUDINARY_REQUIRED_MESSAGE);
+      const remote = await uploadToCloudinary(blob, cloud, templateFolder);
+      const result = { url: remote.url, publicId: remote.publicId };
+      previewUploads.current.set(key, result);
+      return result;
     },
     [templateFolder],
   );
@@ -237,6 +251,10 @@ export function PublishTemplateDialog({ projectId, onClose, onPublished }: Props
     const templateTitle = titleValue.trim();
     if (!templateTitle) {
       setPublishError("Give the template a name before publishing.");
+      return;
+    }
+    if (!cloudinaryConfig()) {
+      setPublishError(CLOUDINARY_REQUIRED_MESSAGE);
       return;
     }
 
@@ -255,35 +273,37 @@ export function PublishTemplateDialog({ projectId, onClose, onPublished }: Props
       const document = structuredClone(state.document);
       const assets = snapshotDocumentAssets(document);
 
-      // 2. Template assets become durable references. Already-hosted
-      //    Cloudinary assets and bundled library items are reused as-is —
-      //    never re-uploaded. Local assets upload ONCE (cached per dialog
-      //    session); without Cloudinary they embed as data urls, as before.
+      // 2. Template image assets must have durable public references.
+      //    Existing public library / Cloudinary URLs are reused. Local
+      //    assets and any data/blob URLs upload once to Cloudinary; if the
+      //    upload cannot complete, publishing stops before POST /api/templates.
       for (const layer of document.layers) {
         if (!isImageLike(layer)) continue;
         const record = assets[layer.assetId];
-        if (!record) continue;
+        if (!record) {
+          throw new Error("An image in this template is missing its asset record. Re-add it and try again.");
+        }
 
-        if (record.provider !== "local" && record.url) {
+        if (
+          record.provider !== "local" &&
+          record.url &&
+          !/^(?:data:|blob:)/i.test(record.url)
+        ) {
           layer.url = resolvePublicPath(record.url);
           continue;
         }
 
         const uploaded = await uploadAssetOnce(record);
-        const url = uploaded ? uploaded.url : ((await assetDataUrl(record.id)) ?? "");
-        if (!url) throw new Error(`The asset "${record.name}" is not available for publishing.`);
-        layer.url = url;
-        assets[record.id] = uploaded
-          ? {
-              ...record,
-              provider: "cloudinary",
-              url: uploaded.url,
-              width: uploaded.width || record.width,
-              height: uploaded.height || record.height,
-              ...(uploaded.publicId ? { publicId: uploaded.publicId } : {}),
-              storeKey: undefined,
-            }
-          : { ...record, provider: "bundled", url, storeKey: undefined };
+        layer.url = uploaded.url;
+        assets[record.id] = {
+          ...record,
+          provider: "cloudinary",
+          url: uploaded.url,
+          width: uploaded.width || record.width,
+          height: uploaded.height || record.height,
+          ...(uploaded.publicId ? { publicId: uploaded.publicId } : {}),
+          storeKey: undefined,
+        };
       }
 
       // 3. User fonts stay self-contained data urls in the document.

@@ -8,8 +8,84 @@ import { validateSmartEditDocument, SMART_EDIT_MAX_DOCUMENT_BYTES } from "@/comp
 const DESCRIPTION_MAX_CHARS = 500;
 const PREVIEW_MAX_BYTES = 4 * 1024 * 1024;
 const EXTRA_MAX_BYTES = 2 * 1024 * 1024 + PREVIEW_MAX_BYTES;
-const PREVIEW_URL_RE =
-  /^(https?:\/\/[^\s"'<>]+|data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+)$/;
+const PREVIEW_URL_RE = /^https:\/\/[^\s"'<>]+$/;
+const DATA_OR_BLOB_URL_RE = /^(?:data:|blob:)/i;
+
+function isCloudinaryImageUrl(value: unknown, cloudName: string): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    const path = url.pathname.split("/");
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "res.cloudinary.com" &&
+      path[1] === cloudName &&
+      path[2] === "image" &&
+      path[3] === "upload"
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Allow bundled public paths and HTTPS URLs, but never embedded bytes/blob URLs. */
+function isPublicImageReference(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const reference = value.trim();
+  if (!reference || DATA_OR_BLOB_URL_RE.test(reference) || reference.startsWith("//")) {
+    return false;
+  }
+  if (reference.startsWith("/")) return true;
+  try {
+    return new URL(reference).protocol === "https:";
+  } catch {
+    // Manifest paths may be stored without their leading slash.
+    return !reference.includes(":") && !reference.startsWith("//");
+  }
+}
+
+/** Reject unpublished/local image records and any image bytes embedded in JSON. */
+function hasOnlyDurableImageReferences(
+  document: { layers: Array<{ type?: string; assetId?: string; url?: string }> },
+  assets: Record<string, unknown>,
+  cloudName: string,
+): boolean {
+  for (const entry of Object.values(assets)) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
+    const record = entry as Record<string, unknown>;
+    if (record.type !== "image" && record.type !== "sticker") continue;
+
+    if (record.provider === "local") return false;
+    if (record.provider !== "bundled" && record.provider !== "cloudinary") return false;
+    if (!isPublicImageReference(record.url)) return false;
+    if (record.provider === "cloudinary" && !isCloudinaryImageUrl(record.url, cloudName)) {
+      return false;
+    }
+  }
+
+  for (const layer of document.layers) {
+    if (layer.type !== "image" && layer.type !== "sticker") continue;
+    if (!isPublicImageReference(layer.url)) return false;
+
+    const entry = assets[layer.assetId ?? ""];
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
+    const record = entry as Record<string, unknown>;
+    if (record.provider === "local") return false;
+    if (record.provider !== "bundled" && record.provider !== "cloudinary") return false;
+    if (record.provider === "cloudinary") {
+      if (
+        !isCloudinaryImageUrl(record.url, cloudName) ||
+        !isCloudinaryImageUrl(layer.url, cloudName)
+      ) {
+        return false;
+      }
+    }
+    if (record.provider === "bundled" && !isPublicImageReference(record.url)) {
+      return false;
+    }
+  }
+  return true;
+}
 const PREVIEW_PUBLIC_ID_RE = /^[\w\-./@ ]{1,300}$/;
 const ASSET_KEY_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -29,8 +105,8 @@ function validDescription(value: unknown): string {
   return value.replace(/\r\n?/g, "\n").trim().slice(0, DESCRIPTION_MAX_CHARS);
 }
 
-/** Stored preview reference: a remote image url or a self-contained data
- *  url. Absent → null (legacy templates render their document live). */
+/** Stored preview reference: a remote HTTPS image URL only.
+ *  Legacy rows may have no preview, but new publications require Cloudinary. */
 function validPreviewUrl(value: unknown): string | null | "invalid" {
   if (value === undefined || value === null) return null;
   if (typeof value !== "string") return "invalid";
@@ -93,6 +169,15 @@ export async function POST(req: Request) {
     return jsonError(403, "Only the Paper Stish administrator can publish templates.");
   }
 
+  const cloudName = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME?.trim();
+  const uploadPreset = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET?.trim();
+  if (!cloudName || !uploadPreset) {
+    return jsonError(
+      503,
+      "Cloudinary is not configured. Set the Cloudinary cloud name and upload preset in Vercel before publishing templates.",
+    );
+  }
+
   const body = await readJsonBody(req, SMART_EDIT_MAX_DOCUMENT_BYTES + EXTRA_MAX_BYTES);
   if (!body) return jsonError(413, "That template is too large to publish.");
 
@@ -109,6 +194,18 @@ export async function POST(req: Request) {
 
   const previewUrl = validPreviewUrl(body.previewUrl);
   if (previewUrl === "invalid") return jsonError(400, "That template preview could not be read.");
+  if (!previewUrl || !isCloudinaryImageUrl(previewUrl, cloudName)) {
+    return jsonError(
+      400,
+      "A Cloudinary-hosted preview is required. Embedded image data and non-Cloudinary previews are not allowed.",
+    );
+  }
+  if (!hasOnlyDurableImageReferences(document, assets, cloudName)) {
+    return jsonError(
+      400,
+      "Every template image and sticker must use a public library URL or a Cloudinary URL. Local, data, and blob URLs cannot be published.",
+    );
+  }
 
   const previewPublicId = validPreviewPublicId(body.previewPublicId);
   if (previewPublicId === "invalid") {
