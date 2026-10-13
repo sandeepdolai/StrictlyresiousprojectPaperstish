@@ -18,6 +18,7 @@ export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" 
 
 type EditableWebsiteField =
   | "heading"
+  | "loveMessage"
   | "intro"
   | "years"
   | "yearsLabel"
@@ -62,6 +63,7 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
   },
   "love-heart": {
     heading: "Love Heart",
+    loveMessage: "I Love You, Your Loved One Name♡",
     photoUrl: null,
     images: [],
     captions: [],
@@ -182,6 +184,7 @@ export function WebsiteEditor({
           setValues({
             ...defaults,
             heading: text("heading", defaults.heading ?? "", 160),
+            loveMessage: text("loveMessage", defaults.loveMessage ?? "", 100),
             intro: text("intro", defaults.intro ?? "", 400),
             noteHeading: text("noteHeading", defaults.noteHeading ?? "", 240),
             signature: text("signature", defaults.signature ?? "", 160),
@@ -345,7 +348,13 @@ export function WebsiteEditor({
       />
 
       {templateSlug === "love-heart" ? (
-        <LoveHeartTemplate editing onExit={onClose} />
+        <LoveHeartTemplate
+          values={values}
+          editing
+          onTextChange={changeText}
+          onPhotoClick={openPhotoChooser}
+          onExit={onClose}
+        />
       ) : isAlbum ? (
         <PhotoAlbumTemplate
           values={values}
