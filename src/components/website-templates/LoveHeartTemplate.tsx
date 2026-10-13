@@ -114,6 +114,7 @@ export function LoveHeartTemplate({
                 const file = input.files && input.files[0];
                 if (file) {
                   window.parent.postMessage({ source: frameSource, type: "photo-selected", file }, "*");
+                  input.value = "";
                 }
               });
               message.addEventListener("input", () => {
