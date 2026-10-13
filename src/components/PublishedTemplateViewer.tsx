@@ -106,8 +106,8 @@ export function PublishedTemplateViewer({
   }
 
   if (serverPublication) {
-    if (serverPublication.templateSlug === "love-heart") {
-      return <LoveHeartTemplate />;
+    if (serverPublication.templateSlug === "love-heart" && serverPublication.values) {
+      return <LoveHeartTemplate values={serverPublication.values} />;
     }
 
     if (serverPublication.templateSlug === "smart-edit" && serverPublication.document) {

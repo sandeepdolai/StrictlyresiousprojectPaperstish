@@ -18,6 +18,7 @@ export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" 
 
 type EditableWebsiteField =
   | "heading"
+  | "loveMessage"
   | "intro"
   | "years"
   | "yearsLabel"
@@ -62,6 +63,7 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
   },
   "love-heart": {
     heading: "Love Heart",
+    loveMessage: "I Love You, Your Loved One Name♡",
     photoUrl: null,
     images: [],
     captions: [],
@@ -182,6 +184,7 @@ export function WebsiteEditor({
           setValues({
             ...defaults,
             heading: text("heading", defaults.heading ?? "", 160),
+            loveMessage: text("loveMessage", defaults.loveMessage ?? "", 100),
             intro: text("intro", defaults.intro ?? "", 400),
             noteHeading: text("noteHeading", defaults.noteHeading ?? "", 240),
             signature: text("signature", defaults.signature ?? "", 160),
@@ -241,9 +244,7 @@ export function WebsiteEditor({
     fileInput.current?.click();
   };
 
-  const choosePhoto = async (fileList: FileList | null) => {
-    const file = fileList?.[0];
-    if (!file) return;
+  const choosePhotoFile = async (file: File) => {
     setPhotoLoading(true);
     setError("");
     try {
@@ -271,6 +272,11 @@ export function WebsiteEditor({
       setPhotoLoading(false);
       if (fileInput.current) fileInput.current.value = "";
     }
+  };
+
+  const choosePhoto = async (fileList: FileList | null) => {
+    const file = fileList?.[0];
+    if (file) await choosePhotoFile(file);
   };
 
   const publish = async () => {
@@ -345,7 +351,13 @@ export function WebsiteEditor({
       />
 
       {templateSlug === "love-heart" ? (
-        <LoveHeartTemplate editing onExit={onClose} />
+        <LoveHeartTemplate
+          values={values}
+          editing
+          onTextChange={changeText}
+          onPhotoSelected={choosePhotoFile}
+          onExit={onClose}
+        />
       ) : isAlbum ? (
         <PhotoAlbumTemplate
           values={values}
