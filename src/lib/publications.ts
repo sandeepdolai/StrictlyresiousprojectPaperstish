@@ -43,6 +43,8 @@ export const TEMPLATE_VALUES_MAX_BYTES = 4_000_000;
 /** Editable values of a normal template (Birthday, Love of My Life). */
 export interface TemplatePublicationValues {
   heading?: string;
+  /** Editable greeting text inside the animated Love Heart template. */
+  loveMessage?: string;
   /** Extra editable copy used by the fixed personal website themes. */
   intro?: string;
   noteHeading?: string;
@@ -138,6 +140,7 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
 
   const values: TemplatePublicationValues = {
     heading: boundedString(v.heading, 200),
+    loveMessage: boundedString(v.loveMessage, 100),
     intro: boundedString(v.intro, 400),
     noteHeading: boundedString(v.noteHeading, 240),
     signature: boundedString(v.signature, 160),
