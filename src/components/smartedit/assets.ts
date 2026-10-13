@@ -15,7 +15,9 @@
 
    Cloudinary is still available as a publish-time/template asset provider:
      NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME
-     NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET   (unsigned preset)
+   Publish-time uploads are SERVER-AUTHORIZED (lib/signedCloudinaryUpload.ts):
+   the browser receives short-lived server-signed Cloudinary parameters and
+   holds no upload credentials of its own.
 ─────────────────────────────────────────────────────────────────────────── */
 
 import {
@@ -33,11 +35,11 @@ export function getBasePath(): string {
   return process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 }
 
-export function cloudinaryConfig(): { cloudName: string; uploadPreset: string } | null {
+/** Client-side Cloudinary detection: the cloud name is public by design.
+ *  Upload parameters themselves are always server-authorized + signed. */
+export function cloudinaryConfig(): { cloudName: string } | null {
   const cloudName = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET;
-  if (!cloudName || !uploadPreset) return null;
-  return { cloudName, uploadPreset };
+  return cloudName ? { cloudName } : null;
 }
 
 export function libraryManifestUrl(): string {
@@ -400,7 +402,7 @@ export async function preparePreviewImage(
   }
 }
 
-/* ── Cloudinary adapter (unsigned upload — free plan) ───────────────────── */
+/* ── Cloudinary adapter (server-authorized signed uploads) ─────────────── */
 
 export interface CloudinaryUpload {
   url: string;
@@ -409,39 +411,17 @@ export interface CloudinaryUpload {
   publicId: string | null;
 }
 
-/** Upload an image blob to Cloudinary under `folder` (unsigned preset).
- *  User uploads default to the shared user-assets folder; template assets
- *  pass their own template namespace so the two stay logically separated. */
+/** Upload an image blob for publishing through the server-authorized flow
+ *  (POST /api/uploads/authorize → signed upload). `projectId` scopes the
+ *  destination to the user's site; `purpose` selects the namespace. */
 export async function uploadToCloudinary(
   blob: Blob,
-  config: { cloudName: string; uploadPreset: string },
-  folder = "paper-stish/user-assets",
+  purpose: "smart-edit" | "template-assets",
+  projectId?: string,
 ): Promise<CloudinaryUpload> {
-  const form = new FormData();
-  form.append("file", blob);
-  form.append("upload_preset", config.uploadPreset);
-  form.append("folder", folder);
-
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${encodeURIComponent(config.cloudName)}/image/upload`,
-    { method: "POST", body: form },
-  );
-  if (!res.ok) throw new Error("Cloudinary upload failed");
-  const data = (await res.json()) as {
-    secure_url?: string;
-    url?: string;
-    width?: number;
-    height?: number;
-    public_id?: string;
-  };
-  const url = data.secure_url ?? data.url;
-  if (!url) throw new Error("Cloudinary upload failed");
-  return {
-    url,
-    width: data.width ?? 0,
-    height: data.height ?? 0,
-    publicId: data.public_id ?? null,
-  };
+  const { authorizedUpload } = await import("@/lib/signedCloudinaryUpload");
+  const uploaded = await authorizedUpload(blob, purpose, projectId);
+  return { ...uploaded, publicId: uploaded.publicId ?? null };
 }
 
 /** Read a local asset as a data url (self-contained save/publish payloads).

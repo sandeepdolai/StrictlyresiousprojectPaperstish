@@ -9,8 +9,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon (and other pooled providers): the runtime uses the pooled
+  // connection (DATABASE_URL, the `-pooler` host), while Prisma CLI
+  // migrations run over the direct connection (DIRECT_URL) so CREATE/ALTER
+  // never go through PgBouncer transaction mode. Both variables must be
+  // set for prisma validate/migrate commands (see .env.example).
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -29,7 +35,8 @@ model User {
   subscriptionCancelAtPeriodEnd Boolean @default(false)
   subscriptionEventAt         DateTime?
 
-  publications Publication[]
+  publications         Publication[]
+  uploadAuthorizations UploadAuthorization[]
 }
 
 model Post {
@@ -104,4 +111,29 @@ model DodoWebhookEvent {
   id          String   @id
   eventType   String
   processedAt DateTime @default(now())
+}
+
+/* ── Upload authorizations (server-authorized Cloudinary uploads) ────────
+   The browser never uploads to Cloudinary on its own authority. Before any
+   publish-time upload, the client asks POST /api/uploads/authorize: the
+   server resolves the signed-in user, enforces per-user rolling quotas,
+   picks a user/site-specific destination and returns Cloudinary params
+   (folder + public_id + upload preset + timestamp) signed with the server-
+   only CLOUDINARY_API_SECRET. Each row records one issued authorization —
+   the audit trail behind the quotas and the orphan-cleanup heuristics. */
+model UploadAuthorization {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // "template-photos" | "smart-edit" | "template-assets" (admin)
+  purpose   String
+  // Full Cloudinary public_id (folder path + random suffix) this
+  // authorization covers — unique per issuance.
+  publicId  String   @unique
+  folder    String
+  issuedAt  DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId, issuedAt])
+  @@index([expiresAt])
 }
