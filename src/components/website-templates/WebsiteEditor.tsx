@@ -153,14 +153,6 @@ export function WebsiteEditor({
   const isAlbum = templateSlug === "photo-album";
   const title = TEMPLATE_TITLES[templateSlug];
   const showPublishResult = Boolean(published && !hasUnpublishedChanges && !editingPublishDetails);
-  const dialogThemeClass =
-    templateSlug === "love-heart"
-      ? styles.loveHeartTheme
-      : templateSlug === "birthday-template"
-        ? styles.birthdayTheme
-        : templateSlug === "love-of-my-life"
-          ? styles.loveStoryTheme
-          : styles.albumTheme;
 
   useEffect(() => {
     const defaults = defaultValues(templateSlug);
@@ -405,7 +397,7 @@ export function WebsiteEditor({
 
       {publishDialogOpen && (
         <div
-          className={`${styles.dialogBackdrop} ${dialogThemeClass}`}
+          className={styles.dialogBackdrop}
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setPublishDialogOpen(false);
