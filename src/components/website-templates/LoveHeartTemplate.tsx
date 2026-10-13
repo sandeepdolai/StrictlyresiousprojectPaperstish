@@ -17,7 +17,7 @@ interface Props {
   editing?: boolean;
   values?: TemplatePublicationValues;
   onTextChange?: (field: "loveMessage", value: string) => void;
-  onPhotoClick?: (index: number) => void;
+  onPhotoSelected?: (file: File) => void;
   onExit?: () => void;
 }
 
@@ -30,7 +30,7 @@ export function LoveHeartTemplate({
   editing = false,
   values,
   onTextChange,
-  onPhotoClick,
+  onPhotoSelected,
   onExit,
 }: Props) {
   const [html, setHtml] = useState<string>(EMPTY_DOCUMENT);
@@ -67,8 +67,9 @@ export function LoveHeartTemplate({
             const slot = document.getElementById("photoSlot");
             const image = document.getElementById("uploadedPhoto");
             const placeholder = document.getElementById("photoPlaceholder");
+            const input = document.getElementById("photoInput");
             const message = document.getElementById("loveMessage");
-            if (!slot || !image || !placeholder || !message) return;
+            if (!slot || !image || !placeholder || !message || !input) return;
 
             function showPlaceholder() {
               image.removeAttribute("src");
@@ -98,17 +99,23 @@ export function LoveHeartTemplate({
               if (photoAction) photoAction.hidden = true;
             }
 
-            // Capture-phase handler prevents the embedded preview's temporary
-            // object-URL picker from swallowing the parent editor's durable upload.
+            // The editor uses this iframe's native file picker so the browser's
+            // user-gesture requirement is preserved. The selected File then crosses
+            // the sandbox boundary via structured-clone postMessage.
             slot.addEventListener("click", (event) => {
-              event.preventDefault();
-              event.stopImmediatePropagation();
-              if (editing) {
-                window.parent.postMessage({ source: frameSource, type: "choose-photo" }, "*");
+              if (!editing) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
               }
             }, true);
 
             if (editing) {
+              input.addEventListener("change", () => {
+                const file = input.files && input.files[0];
+                if (file) {
+                  window.parent.postMessage({ source: frameSource, type: "photo-selected", file }, "*");
+                }
+              });
               message.addEventListener("input", () => {
                 const value = (message.textContent || "").replace(/[\\r\\n]+/g, " ").replace(/\\s+/g, " ").slice(0, 100);
                 window.parent.postMessage({ source: frameSource, type: "love-message-change", value }, "*");
@@ -151,7 +158,7 @@ export function LoveHeartTemplate({
     const frame = iframeRef.current;
     const onMessage = (event: MessageEvent<unknown>) => {
       if (!frame || event.source !== frame.contentWindow || !event.data || typeof event.data !== "object") return;
-      const data = event.data as { source?: unknown; type?: unknown; value?: unknown };
+      const data = event.data as { source?: unknown; type?: unknown; value?: unknown; file?: unknown };
       if (data.source !== FRAME_SOURCE) return;
 
       if (data.type === "ready") {
@@ -169,8 +176,16 @@ export function LoveHeartTemplate({
         return;
       }
 
-      if (data.type === "choose-photo" && editing) {
-        onPhotoClick?.(0);
+      if (data.type === "photo-selected" && editing && data.file && typeof data.file === "object") {
+        const file = data.file as Partial<File>;
+        if (
+          typeof file.name === "string" &&
+          typeof file.type === "string" &&
+          typeof file.size === "number" &&
+          typeof file.arrayBuffer === "function"
+        ) {
+          onPhotoSelected?.(file as File);
+        }
         return;
       }
 
@@ -181,7 +196,7 @@ export function LoveHeartTemplate({
 
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [editing, onPhotoClick, onTextChange]);
+  }, [editing, onPhotoSelected, onTextChange]);
 
   // Publish-time upload replaces the local data URL with a durable Cloudinary
   // URL in the server snapshot. Updating photoUrl here immediately refreshes
