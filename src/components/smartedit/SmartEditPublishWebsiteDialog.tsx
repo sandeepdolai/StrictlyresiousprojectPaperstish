@@ -135,6 +135,13 @@ export function SmartEditPublishWebsiteDialog({
             ...(uploaded.publicId ? { publicId: uploaded.publicId } : {}),
             storeKey: undefined,
           };
+        } else if (cloud) {
+          // Cloudinary deployments must publish durable URLs only — the
+          // server rejects embedded base64 images, so fail with a clear
+          // message instead of producing a snapshot that cannot publish.
+          throw new Error(
+            `The image "${record.name}" could not be uploaded for publishing. Check your connection and try again.`,
+          );
         } else {
           durableUrl = await dataUrlForAsset(record.id);
           if (durableUrl) {

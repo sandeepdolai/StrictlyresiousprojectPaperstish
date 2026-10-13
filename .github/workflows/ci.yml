@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Install dependencies
         run: npm install
@@ -26,15 +26,21 @@ jobs:
         run: npx prisma generate
         env:
           DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
+          DIRECT_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
+
+      - name: Unit tests (published-media storage policy)
+        run: node --test tests/published-media-policy.test.mts
 
       - name: Typecheck
         run: npm run typecheck
         env:
           DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
+          DIRECT_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
 
       - name: Build
         run: npm run build
         env:
           DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
+          DIRECT_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
           NEXTAUTH_SECRET: "ci-placeholder-secret"
           NEXTAUTH_URL: "http://localhost:3000"

@@ -20,6 +20,7 @@
 import type { SmartEditDocument } from "@/components/smartedit/types";
 import { validateSmartEditDocument } from "@/components/smartedit/publish";
 import { slugPart } from "@/lib/slug";
+import { durableTemplateValues } from "@/lib/cloudinaryUpload";
 
 export { slugPart };
 
@@ -237,12 +238,25 @@ export function publishResultToRecord(result: PublishResult): PublishedRecord {
 
 /** POST /api/publish — store a publication snapshot server-side. */
 export async function publishWebsite(body: PublishWebsiteBody): Promise<PublishResult> {
+  // Publish-time media boundary: normal-template photos move from the
+  // device (base64) to Cloudinary before the snapshot reaches the server,
+  // so PostgreSQL never stores embedded image bytes in a Cloudinary-enabled
+  // deployment. Inert when Cloudinary is not configured (local development).
+  const rawValues = body.data?.values;
+  const data: PublishWebsiteBody["data"] =
+    rawValues && typeof rawValues === "object" && !Array.isArray(rawValues)
+      ? {
+          ...body.data,
+          values: await durableTemplateValues(rawValues as TemplatePublicationValues),
+        }
+      : body.data;
+
   let res: Response;
   try {
     res = await fetch("/api/publish", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, data }),
     });
   } catch {
     throw new Error("Could not reach the Paper Stish server. Check your connection and try again.");

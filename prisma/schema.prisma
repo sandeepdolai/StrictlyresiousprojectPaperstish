@@ -9,8 +9,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon (and other pooled providers): the runtime uses the pooled
+  // connection (DATABASE_URL, the `-pooler` host), while Prisma CLI
+  // migrations run over the direct connection (DIRECT_URL) so CREATE/ALTER
+  // never go through PgBouncer transaction mode. Both variables must be
+  // set for prisma validate/migrate commands (see .env.example).
+  directUrl = env("DIRECT_URL")
 }
 
 model User {

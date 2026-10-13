@@ -8,6 +8,12 @@ import {
   validateTemplateValues,
   TEMPLATE_VALUES_MAX_BYTES,
 } from "@/lib/publications";
+import {
+  cloudinaryMediaConfigured,
+  embeddedMediaError,
+  smartEditEmbeddedImageCount,
+  templateValuesEmbeddedImageCount,
+} from "@/lib/publishedMediaPolicy";
 import { validateSmartEditDocument, SMART_EDIT_MAX_DOCUMENT_BYTES } from "@/components/smartedit/publish";
 
 /** Unpredictable, URL-safe public id for a publication. */
@@ -61,6 +67,7 @@ export async function POST(req: Request) {
   /* Validate the snapshot per template type and serialize what will be
      stored server-side. */
   let dataJson: string;
+  let embeddedImages = 0;
   if (slug === "smart-edit") {
     const document = validateSmartEditDocument(rawData.document);
     if (!document) return jsonError(400, "That Smart Edit project could not be read.");
@@ -68,6 +75,7 @@ export async function POST(req: Request) {
       return jsonError(413, "This project is too large to publish. Remove a few images and try again.");
     }
     dataJson = JSON.stringify({ document });
+    embeddedImages = smartEditEmbeddedImageCount(document);
   } else {
     const values = validateTemplateValues(rawData.values);
     if (!values) return jsonError(400, "That template data could not be read.");
@@ -75,6 +83,17 @@ export async function POST(req: Request) {
       return jsonError(413, "This website is too large to publish (the photo may be too big). Use a smaller photo and try again.");
     }
     dataJson = JSON.stringify({ values });
+    embeddedImages = templateValuesEmbeddedImageCount(values);
+  }
+
+  /* Storage policy: in a Cloudinary-enabled deployment, published snapshots
+     must reference durable media (Cloudinary/bundled/HTTPS URLs) — never
+     embedded base64 images, which would store binary media inside
+     PostgreSQL rows. Embedded photos remain a bounded legacy fallback for
+     local development without Cloudinary. User fonts embedded in Smart Edit
+     documents are part of the snapshot by design and stay allowed. */
+  if (cloudinaryMediaConfigured() && embeddedImages > 0) {
+    return jsonError(422, embeddedMediaError(embeddedImages));
   }
 
   /* Republish: when the caller already owns the publication named by
