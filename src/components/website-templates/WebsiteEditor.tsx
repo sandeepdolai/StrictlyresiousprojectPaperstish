@@ -244,9 +244,7 @@ export function WebsiteEditor({
     fileInput.current?.click();
   };
 
-  const choosePhoto = async (fileList: FileList | null) => {
-    const file = fileList?.[0];
-    if (!file) return;
+  const choosePhotoFile = async (file: File) => {
     setPhotoLoading(true);
     setError("");
     try {
@@ -274,6 +272,11 @@ export function WebsiteEditor({
       setPhotoLoading(false);
       if (fileInput.current) fileInput.current.value = "";
     }
+  };
+
+  const choosePhoto = async (fileList: FileList | null) => {
+    const file = fileList?.[0];
+    if (file) await choosePhotoFile(file);
   };
 
   const publish = async () => {
@@ -352,7 +355,7 @@ export function WebsiteEditor({
           values={values}
           editing
           onTextChange={changeText}
-          onPhotoClick={openPhotoChooser}
+          onPhotoSelected={choosePhotoFile}
           onExit={onClose}
         />
       ) : isAlbum ? (
