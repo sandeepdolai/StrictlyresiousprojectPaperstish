@@ -71,24 +71,34 @@ test("templateValuesEmbeddedImageCount counts photoUrl and album images", () => 
   assert.equal(templateValuesEmbeddedImageCount({}), 0);
 });
 
-test("cloudinaryMediaConfigured requires both cloud name and upload preset", () => {
-  const savedName = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME;
-  const savedPreset = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET;
+test("cloudinaryMediaConfigured requires the SERVER-side Cloudinary credentials", () => {
+  const saved = { ...process.env };
 
-  process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME = "demo-cloud";
-  process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET = "demo-preset";
+  process.env.CLOUDINARY_CLOUD_NAME = "demo-cloud";
+  process.env.CLOUDINARY_API_KEY = "demo-key";
+  process.env.CLOUDINARY_API_SECRET = "demo-secret";
   assert.equal(cloudinaryMediaConfigured(), true);
 
-  delete process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET;
+  // Falls back to the public cloud name when CLOUDINARY_CLOUD_NAME is unset.
+  delete process.env.CLOUDINARY_CLOUD_NAME;
+  process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME = "demo-cloud";
+  assert.equal(cloudinaryMediaConfigured(), true);
+
+  delete process.env.CLOUDINARY_API_SECRET;
   assert.equal(cloudinaryMediaConfigured(), false);
 
-  process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET = "   ";
+  process.env.CLOUDINARY_API_SECRET = "   ";
   assert.equal(cloudinaryMediaConfigured(), false);
 
-  if (savedName === undefined) delete process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME;
-  else process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME = savedName;
-  if (savedPreset === undefined) delete process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET;
-  else process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET = savedPreset;
+  for (const key of Object.keys(saved)) process.env[key] = saved[key];
+  for (const key of [
+    "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
+    "NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME",
+  ]) {
+    if (!(key in saved)) delete process.env[key];
+  }
 });
 
 test("embeddedMediaError renders singular and plural messages", () => {

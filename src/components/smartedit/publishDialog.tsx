@@ -43,7 +43,7 @@ import { ModalShell, SheetShell } from "./editor-ui";
 const DESCRIPTION_MAX_CHARS = 500;
 const TITLE_MAX_CHARS = 120;
 const CLOUDINARY_REQUIRED_MESSAGE =
-  "Cloudinary is not configured. Set NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET in Vercel, then redeploy before publishing templates.";
+  "Cloudinary is not configured. Set NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME plus the server Cloudinary keys (CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME) in Vercel, then redeploy before publishing templates.";
 /** Preview render target — the exact document at a thumbnail-sane size. */
 const PREVIEW_MAX_EDGE = 1350;
 
@@ -192,11 +192,10 @@ export function PublishTemplateDialog({ projectId, onClose, onPublished }: Props
 
   /* ── Publish (upload once → POST once) ───────────────────────────── */
 
-  const templateFolder = `paper-stish/templates/${projectId}`;
-
   /** Upload an image asset to Cloudinary once per dialog session.
    *  Existing public library / Cloudinary URLs are reused; data/blob URLs
-   *  are uploaded instead of being persisted in the template document. */
+   *  are uploaded instead of being persisted in the template document.
+   *  Uploads are server-authorized (admin-scoped signed parameters). */
   const uploadAssetOnce = useCallback(
     async (record: AssetRecord): Promise<CloudinaryUpload> => {
       const cloud = cloudinaryConfig();
@@ -219,11 +218,11 @@ export function PublishTemplateDialog({ projectId, onClose, onPublished }: Props
         );
       }
 
-      const remote = await uploadToCloudinary(blob, cloud, templateFolder);
+      const remote = await uploadToCloudinary(blob, "template-assets", projectId);
       assetUploads.current.set(record.id, remote);
       return remote;
     },
-    [templateFolder],
+    [projectId],
   );
 
   /** Template previews must live on Cloudinary; never embed image bytes in
@@ -234,12 +233,12 @@ export function PublishTemplateDialog({ projectId, onClose, onPublished }: Props
       if (cached) return cached;
       const cloud = cloudinaryConfig();
       if (!cloud) throw new Error(CLOUDINARY_REQUIRED_MESSAGE);
-      const remote = await uploadToCloudinary(blob, cloud, templateFolder);
+      const remote = await uploadToCloudinary(blob, "template-assets", projectId);
       const result = { url: remote.url, publicId: remote.publicId };
       previewUploads.current.set(key, result);
       return result;
     },
-    [templateFolder],
+    [projectId],
   );
 
   const publish = useCallback(async () => {

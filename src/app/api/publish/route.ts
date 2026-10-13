@@ -10,9 +10,13 @@ import {
 } from "@/lib/publications";
 import {
   cloudinaryMediaConfigured,
+  deploymentCloudName,
   embeddedMediaError,
   smartEditEmbeddedImageCount,
+  smartEditUnauthorizedReferences,
   templateValuesEmbeddedImageCount,
+  templateValuesUnauthorizedReferences,
+  unauthorizedMediaError,
 } from "@/lib/publishedMediaPolicy";
 import { validateSmartEditDocument, SMART_EDIT_MAX_DOCUMENT_BYTES } from "@/components/smartedit/publish";
 
@@ -68,6 +72,8 @@ export async function POST(req: Request) {
      stored server-side. */
   let dataJson: string;
   let embeddedImages = 0;
+  let unauthorizedRefs: string[];
+  const cloudName = deploymentCloudName();
   if (slug === "smart-edit") {
     const document = validateSmartEditDocument(rawData.document);
     if (!document) return jsonError(400, "That Smart Edit project could not be read.");
@@ -76,6 +82,7 @@ export async function POST(req: Request) {
     }
     dataJson = JSON.stringify({ document });
     embeddedImages = smartEditEmbeddedImageCount(document);
+    unauthorizedRefs = smartEditUnauthorizedReferences(document, cloudName, user.id);
   } else {
     const values = validateTemplateValues(rawData.values);
     if (!values) return jsonError(400, "That template data could not be read.");
@@ -84,6 +91,7 @@ export async function POST(req: Request) {
     }
     dataJson = JSON.stringify({ values });
     embeddedImages = templateValuesEmbeddedImageCount(values);
+    unauthorizedRefs = templateValuesUnauthorizedReferences(values, cloudName, user.id);
   }
 
   /* Storage policy: in a Cloudinary-enabled deployment, published snapshots
@@ -91,9 +99,15 @@ export async function POST(req: Request) {
      embedded base64 images, which would store binary media inside
      PostgreSQL rows. Embedded photos remain a bounded legacy fallback for
      local development without Cloudinary. User fonts embedded in Smart Edit
-     documents are part of the snapshot by design and stay allowed. */
+     documents are part of the snapshot by design and stay allowed.
+     Media on the deployment's own cloud must additionally live under the
+     publishing user's own namespace (where the server's signed uploads put
+     it) or a shared legacy namespace — never another user's namespace. */
   if (cloudinaryMediaConfigured() && embeddedImages > 0) {
     return jsonError(422, embeddedMediaError(embeddedImages));
+  }
+  if (cloudinaryMediaConfigured() && unauthorizedRefs.length > 0) {
+    return jsonError(422, unauthorizedMediaError(unauthorizedRefs.length));
   }
 
   /* Republish: when the caller already owns the publication named by

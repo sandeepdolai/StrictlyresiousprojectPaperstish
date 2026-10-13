@@ -94,8 +94,6 @@ export function SmartEditPublishWebsiteDialog({
       const document: SmartEditDocument = structuredClone(current.document);
       const assets: Record<string, AssetRecord> = snapshotDocumentAssets(current.document);
       const cloud = cloudinaryConfig();
-      const folder = "paper-stish/published-websites/" +
-        projectId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64);
 
       // Every image must use a durable URL. Device-local blob URLs cannot
       // work for visitors who open the published site on another device.
@@ -118,7 +116,9 @@ export function SmartEditPublishWebsiteDialog({
           if (!uploaded) {
             const blob = await assetBlob(record.id);
             if (blob) {
-              uploaded = await uploadToCloudinary(blob, cloud, folder);
+              // Server-authorized upload: the server signs user/site-scoped
+              // Cloudinary parameters after checking the session + quotas.
+              uploaded = await uploadToCloudinary(blob, "smart-edit", projectId);
               uploads.current.set(record.id, uploaded);
             }
           }

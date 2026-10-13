@@ -1,0 +1,45 @@
+name: Cleanup orphaned published media
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_delete:
+        description: 'Type DELETE to remove unreferenced assets under paper-stish/published-websites/'
+        required: true
+        type: string
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate destructive confirmation
+        if: inputs.confirm_delete != 'DELETE'
+        run: |
+          echo "Confirmation must be exactly DELETE. No Cloudinary changes were made."
+          exit 1
+
+      - name: Checkout repository
+        if: inputs.confirm_delete == 'DELETE'
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: inputs.confirm_delete == 'DELETE'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate Prisma client
+        if: inputs.confirm_delete == 'DELETE'
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Dry-run scope and delete orphaned published media
+        if: inputs.confirm_delete == 'DELETE'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        run: node scripts/cleanup-orphaned-published-media.mjs --confirm

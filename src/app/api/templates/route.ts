@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { db } from "@/lib/db";
 import { requireUser, jsonError, readJsonBody } from "@/lib/publicationServer";
 import { isAdminEmail } from "@/lib/admin";
+import { signedUploadServerConfig } from "@/lib/uploadAuthorization";
 import { validateSmartEditDocument, SMART_EDIT_MAX_DOCUMENT_BYTES } from "@/components/smartedit/publish";
 
 /** Total headroom above the document budget: assets + stored preview. */
@@ -169,14 +170,14 @@ export async function POST(req: Request) {
     return jsonError(403, "Only the Paper Stish administrator can publish templates.");
   }
 
-  const cloudName = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME?.trim();
-  const uploadPreset = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET?.trim();
-  if (!cloudName || !uploadPreset) {
+  const config = signedUploadServerConfig();
+  if (!config) {
     return jsonError(
       503,
-      "Cloudinary is not configured. Set the Cloudinary cloud name and upload preset in Vercel before publishing templates.",
+      "Cloudinary is not configured. Set the server Cloudinary keys (CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME) in Vercel before publishing templates.",
     );
   }
+  const cloudName = config.cloudName;
 
   const body = await readJsonBody(req, SMART_EDIT_MAX_DOCUMENT_BYTES + EXTRA_MAX_BYTES);
   if (!body) return jsonError(413, "That template is too large to publish.");

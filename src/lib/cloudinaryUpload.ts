@@ -4,32 +4,27 @@
    The normal website templates (Birthday, Love of My Life, Photo Album,
    Love Heart) keep photos on the user's device while editing (device-first
    model — see lib/localProjects.ts). When the user presses Publish, this
-   module uploads the data-URL photos the snapshot needs to Cloudinary, so
-   the server never has to persist base64 image bytes in PostgreSQL.
+   module moves the data-URL photos the snapshot needs to Cloudinary, so the
+   server never persists base64 image bytes in PostgreSQL.
 
-   Uses the same unsigned upload preset as Smart Edit
-   (NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_*). When Cloudinary is not configured
-   the helpers here are inert and publishing falls back to the bounded
-   embedded-photo path for local development.
+   Every upload is SERVER-AUTHORIZED: the browser first asks
+   POST /api/uploads/authorize (session + quota checked server-side), which
+   returns Cloudinary parameters signed with the server-only API secret and
+   scoped to the user's own namespace. The client holds no Cloudinary
+   credentials. When Cloudinary is not configured the helpers here are inert
+   and publishing falls back to the bounded embedded-photo path for local
+   development.
 ─────────────────────────────────────────────────────────────────────────── */
 
 import type { TemplatePublicationValues } from "@/lib/publications";
-
-export const PUBLISHED_TEMPLATE_PHOTOS_FOLDER = "paper-stish/published-websites/template-photos";
+import { authorizedUpload } from "@/lib/signedCloudinaryUpload";
 
 /** Matches the editor's input bound (assets.ts IMAGE_MAX_INPUT_BYTES). */
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 
-export interface CloudinaryClientConfig {
-  cloudName: string;
-  uploadPreset: string;
-}
-
-export function cloudinaryClientConfig(): CloudinaryClientConfig | null {
+export function cloudinaryClientConfig(): { cloudName: string } | null {
   const cloudName = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME?.trim();
-  const uploadPreset = process.env.NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET?.trim();
-  if (!cloudName || !uploadPreset) return null;
-  return { cloudName, uploadPreset };
+  return cloudName ? { cloudName } : null;
 }
 
 /** Decode a base64 image data URL into a Blob (browser + Node compatible). */
@@ -46,34 +41,10 @@ function dataUrlToBlob(dataUrl: string): Blob {
   return new Blob([bytes], { type: mime });
 }
 
-/** Upload one base64 image to Cloudinary under `folder`; returns the durable URL. */
-export async function uploadDataUrlToCloudinary(
-  dataUrl: string,
-  config: CloudinaryClientConfig,
-  folder: string,
-): Promise<string> {
-  const blob = dataUrlToBlob(dataUrl);
-  const form = new FormData();
-  form.append("file", blob);
-  form.append("upload_preset", config.uploadPreset);
-  form.append("folder", folder);
-
-  let response: Response;
-  try {
-    response = await fetch(
-      `https://api.cloudinary.com/v1_1/${encodeURIComponent(config.cloudName)}/image/upload`,
-      { method: "POST", body: form },
-    );
-  } catch {
-    throw new Error("Could not reach photo storage. Check your connection and try again.");
-  }
-  if (!response.ok) {
-    throw new Error("Photo storage rejected the upload. Try again in a moment.");
-  }
-  const data = (await response.json()) as { secure_url?: string; url?: string };
-  const url = data.secure_url ?? data.url;
-  if (!url) throw new Error("Photo storage did not return the uploaded photo. Try again.");
-  return url;
+/** Upload one data-URL image through the server-authorized signed flow. */
+export async function uploadDataUrlToCloudinary(dataUrl: string): Promise<string> {
+  const uploaded = await authorizedUpload(dataUrlToBlob(dataUrl), "template-photos");
+  return uploaded.url;
 }
 
 /**
@@ -84,17 +55,12 @@ export async function uploadDataUrlToCloudinary(
 export async function durableTemplateValues(
   values: TemplatePublicationValues,
 ): Promise<TemplatePublicationValues> {
-  const config = cloudinaryClientConfig();
-  if (!config) return values;
+  if (!cloudinaryClientConfig()) return values;
 
   const next: TemplatePublicationValues = { ...values };
 
   if (typeof next.photoUrl === "string" && next.photoUrl.startsWith("data:")) {
-    next.photoUrl = await uploadDataUrlToCloudinary(
-      next.photoUrl,
-      config,
-      PUBLISHED_TEMPLATE_PHOTOS_FOLDER,
-    );
+    next.photoUrl = await uploadDataUrlToCloudinary(next.photoUrl);
   }
 
   if (Array.isArray(next.images)) {
@@ -102,7 +68,7 @@ export async function durableTemplateValues(
     for (const image of next.images) {
       images.push(
         typeof image === "string" && image.startsWith("data:")
-          ? await uploadDataUrlToCloudinary(image, config, PUBLISHED_TEMPLATE_PHOTOS_FOLDER)
+          ? await uploadDataUrlToCloudinary(image)
           : image,
       );
     }

@@ -102,9 +102,9 @@ Never run `prisma migrate reset` against Production — it drops all data.
 | --- | --- | --- |
 | `DATABASE_URL` | server | Neon **pooled** connection for the runtime |
 | `DIRECT_URL` | server (CLI) | Neon direct connection for migrations |
-| `NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME` | public | Cloudinary cloud (also gates the embedded-media policy) |
-| `NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_UPLOAD_PRESET` | public | Unsigned preset for publish-time uploads |
-| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | server/CI only | Admin API (cleanup script + GitHub Actions secret) |
+| `NEXT_PUBLIC_SMART_EDIT_CLOUDINARY_CLOUD_NAME` | public | Cloudinary cloud (client-side upload-path detection) |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | server/CI only | Signed uploads (`/api/uploads/authorize`), media policy, Admin API cleanup + GitHub Actions secrets |
+| `CLOUDINARY_SIGNED_UPLOAD_PRESET` | server, optional | Signed-mode preset name (default `paper_stish_signed_uploads`) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `NEXTAUTH_SECRET` / `NEXTAUTH_URL` | server | Authentication (unchanged) |
 | `DODO_PAYMENTS_API_KEY` / `DODO_PAYMENTS_PRODUCT_ID` / `DODO_PAYMENTS_WEBHOOK_KEY` / `DODO_PAYMENTS_ENVIRONMENT` | server | Billing (unchanged) |
 
@@ -114,30 +114,53 @@ Folder taxonomy (dynamic folder mode; folders are organizational, not an
 authorization mechanism — authorization is enforced server-side):
 
 ```
-paper-stish/published-websites/{projectId}     Smart Edit site media (publish-time)
-paper-stish/published-websites/template-photos Normal-template photos (publish-time)
-paper-stish/user-assets                        Default user upload folder
-paper-stish/templates/{projectId}              Admin template media
-paper-stish/backups                            Manual backups
+paper-stish/published-websites/u/{userId}/sites/{projectId}   Smart Edit site media (signed, publish-time)
+paper-stish/published-websites/u/{userId}/template-photos     Normal-template photos (signed, publish-time)
+paper-stish/templates/{projectId}                              Admin template media (signed, admin-only)
+paper-stish/published-websites/{projectId}                     LEGACY (pre-authorization) — read-only grace
+paper-stish/published-websites/template-photos                 LEGACY (pre-authorization) — read-only grace
+paper-stish/user-assets                                        LEGACY (pre-authorization) — read-only grace
+paper-stish/backups                                            Manual backups
 ```
 
-Upload security:
+Upload security (server-authorized signed uploads):
 
-- Client uploads use the unsigned preset `paper_stish_uploads`, restricted to
-  raster image formats (`jpg, jpeg, png, webp, gif, avif`) — non-image and
-  SVG payloads are rejected by Cloudinary before storage. Upload size is
-  bounded by the client-side 15 MB input check plus on-device downscaling to
-  ≤1600 px before upload, and by the account's plan-level file-size limit.
-  Unsigned uploads can only create assets in the account — they cannot read,
-  overwrite by public id, or delete existing assets.
-- The server validates every published/template snapshot: Cloudinary
-  delivery URLs must belong to the configured cloud
-  (`api/templates` route), and embedded base64 images are rejected at
-  publish time when Cloudinary is configured (`api/publish` route).
+- The browser holds no Cloudinary credentials. Every publish-time upload
+  starts with `POST /api/uploads/authorize`: the server resolves the
+  signed-in user, restricts the admin namespace to the administrator,
+  enforces per-user rolling quotas (default 120/hour, 480/day; grants live
+  in the `UploadAuthorization` table), and returns Cloudinary parameters
+  (folder + public_id + upload preset + timestamp) signed with the
+  server-only `CLOUDINARY_API_SECRET`. Uploads go browser → Cloudinary with
+  exactly those parameters; Cloudinary's signature validation rejects any
+  added or modified signable parameter, so the destination cannot be altered
+  client-side.
+- The signed-mode preset `paper_stish_signed_uploads`
+  (`unsigned=false`) restricts uploads to raster image formats
+  (`jpg, jpeg, png, webp, gif, avif`) — non-image and SVG payloads are
+  rejected by Cloudinary before storage. Upload size is bounded by the
+  client-side 15 MB input check plus on-device downscaling to ≤1600 px
+  before upload, and by the account's plan-level file-size limit. Signed
+  uploads can only create assets under the server-chosen folder — they
+  cannot read, overwrite by public id, or delete existing assets.
+- Publish-time reference policy (`api/publish`): when the server Cloudinary
+  credentials are configured, embedded base64 images are rejected, and
+  media on the deployment's own cloud must live under the publishing user's
+  own namespace (`paper-stish/published-websites/u/{userId}/…`, where the
+  signed flow puts them) or a shared legacy namespace. A URL under another
+  user's namespace is rejected, so an authorization can never be used to
+  publish someone else's assets.
 - Administrative operations (inventory, deletion) run only server-side with
   `CLOUDINARY_API_KEY`/`CLOUDINARY_API_SECRET` (see
-  `scripts/cleanup-cloudinary-template-assets.mjs` and its
-  confirmation-gated workflow).
+  `scripts/cleanup-cloudinary-template-assets.mjs` and
+  `scripts/cleanup-orphaned-published-media.mjs` and their
+  confirmation-gated workflows). The orphan cleanup deletes
+  `published-websites/` assets that no Publication references and that are
+  older than a retention window (default 48h, so in-flight publish sessions
+  are never hit).
+- The legacy unsigned preset (`paper_stish_uploads`) must be DELETED from
+  the Cloudinary account once production serves the signed-upload code, so
+  the last unauthenticated upload path disappears.
 
 ## 6. Deployments
 

@@ -28,8 +28,8 @@ jobs:
           DATABASE_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
           DIRECT_URL: "postgresql://ci:ci@127.0.0.1:5432/ci?schema=public"
 
-      - name: Unit tests (published-media storage policy)
-        run: node --test tests/published-media-policy.test.mts
+      - name: Unit tests (storage policy + upload authorization)
+        run: npm test
 
       - name: Typecheck
         run: npm run typecheck
