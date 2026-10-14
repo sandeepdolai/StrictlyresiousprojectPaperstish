@@ -31,6 +31,7 @@ export const PUBLISHABLE_TEMPLATE_SLUGS = [
   "love-of-my-life",
   "photo-album",
   "love-heart",
+  "forever-and-ever",
 ] as const;
 
 export type PublishableTemplateSlug = (typeof PUBLISHABLE_TEMPLATE_SLUGS)[number];
@@ -58,6 +59,8 @@ export interface TemplatePublicationValues {
   images?: string[];
   /** Optional captions, aligned with the album image array. */
   captions?: string[];
+  /** Four editable paragraphs used by the notebook-style love-letter template. */
+  letterParagraphs?: string[];
 }
 
 /** What the public viewer receives for a published website. */
@@ -123,7 +126,7 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
     if (!Array.isArray(v.images) || v.images.length > 6) return null;
     images = [];
     for (const item of v.images) {
-      if (typeof item !== "string" || item.length > 560_000 || !PHOTO_URL_RE.test(item)) return null;
+      if (typeof item !== "string" || item.length > 560_000 || (item !== "" && !PHOTO_URL_RE.test(item))) return null;
       images.push(item);
     }
   }
@@ -135,6 +138,16 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
     for (const item of v.captions) {
       if (typeof item !== "string" || item.length > 120) return null;
       captions.push(item);
+    }
+  }
+
+  let letterParagraphs: string[] | undefined;
+  if (v.letterParagraphs !== undefined) {
+    if (!Array.isArray(v.letterParagraphs) || v.letterParagraphs.length > 4) return null;
+    letterParagraphs = [];
+    for (const item of v.letterParagraphs) {
+      if (typeof item !== "string" || item.length > 1200) return null;
+      letterParagraphs.push(item);
     }
   }
 
@@ -151,6 +164,7 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
     photoUrl,
     images,
     captions,
+    letterParagraphs,
   };
   return values;
 }

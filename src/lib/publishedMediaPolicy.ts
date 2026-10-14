@@ -162,7 +162,7 @@ export function templateValuesUnauthorizedReferences(
     urls.push(values.photoUrl);
   }
   for (const image of values.images ?? []) {
-    if (typeof image === "string" && !isEmbeddedImage(image)) urls.push(image);
+    if (typeof image === "string" && image.length > 0 && !isEmbeddedImage(image)) urls.push(image);
   }
   return unauthorizedReferences(urls, cloudName, userId);
 }

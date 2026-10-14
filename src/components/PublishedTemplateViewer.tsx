@@ -14,6 +14,7 @@ import { SmartEditViewer } from "@/components/smartedit/SmartEditViewer";
 import { LoveOfMyLifeTemplate } from "@/components/website-templates/LoveOfMyLifeTemplate";
 import { PhotoAlbumTemplate } from "@/components/website-templates/PhotoAlbumTemplate";
 import { LoveHeartTemplate } from "@/components/website-templates/LoveHeartTemplate";
+import { ForeverAndEverTemplate } from "@/components/website-templates/ForeverAndEverTemplate";
 
 interface Props {
   username: string;
@@ -108,6 +109,10 @@ export function PublishedTemplateViewer({
   if (serverPublication) {
     if (serverPublication.templateSlug === "love-heart" && serverPublication.values) {
       return <LoveHeartTemplate values={serverPublication.values} />;
+    }
+
+    if (serverPublication.templateSlug === "forever-and-ever" && serverPublication.values) {
+      return <ForeverAndEverTemplate title={serverPublication.title} values={serverPublication.values} />;
     }
 
     if (serverPublication.templateSlug === "smart-edit" && serverPublication.document) {

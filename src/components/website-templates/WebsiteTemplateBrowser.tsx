@@ -8,7 +8,7 @@ import { ProjectSheet } from "../ProjectSheet";
 import { WebsiteEditor, type WebsiteEditorTemplateSlug } from "./WebsiteEditor";
 
 function isEditableSlug(slug: string): slug is WebsiteEditorTemplateSlug {
-  return slug === "love-of-my-life" || slug === "birthday-template" || slug === "photo-album" || slug === "love-heart";
+  return slug === "love-of-my-life" || slug === "birthday-template" || slug === "photo-album" || slug === "love-heart" || slug === "forever-and-ever";
 }
 
 /** Browse fixed website themes, preview one, then edit only its images and text. */
