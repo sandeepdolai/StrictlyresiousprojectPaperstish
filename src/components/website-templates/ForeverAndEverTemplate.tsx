@@ -1,133 +1,160 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import type { TemplatePublicationValues } from "@/lib/publications";
 import styles from "./ForeverAndEverTemplate.module.css";
 
-type EditableField = "heading";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const TEMPLATE_URL = `${BASE_PATH}/website-templates/forever-and-ever.html.gz.b64`;
+const EMPTY_DOCUMENT = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{width:100%;height:100%;margin:0;background:#e9edf5;overflow:hidden}</style></head><body></body></html>';
+const BLANK_PARAGRAPHS = ["", "", "", ""];
 
 interface Props {
   values?: TemplatePublicationValues;
   editing?: boolean;
-  onTextChange?: (field: EditableField, value: string) => void;
+  onTextChange?: (field: "heading", value: string) => void;
   onParagraphChange?: (index: number, value: string) => void;
   onPhotoClick?: (index: number) => void;
   onExit?: () => void;
 }
 
-const EMPTY_PARAGRAPHS = ["", "", "", ""];
-const EMPTY_PHOTOS = ["", "", ""];
-
-function PuppyDecoration() {
-  return (
-    <svg className={styles.puppy} viewBox="0 0 170 150" aria-hidden="true">
-      <g stroke="#3b4fa8" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M30 98 C8 92 4 130 30 128 C34 128 38 124 38 120" fill="#fff" />
-        <path d="M140 98 C162 92 166 130 140 128 C136 128 132 124 132 120" fill="#fff" />
-        <path d="M34 112 C28 70 52 52 85 52 C118 52 142 70 136 112 C134 128 112 138 85 138 C58 138 36 128 34 112Z" fill="#fff" />
-        <path d="M60 66 C64 58 74 55 85 55 C96 55 106 58 110 66" fill="none" />
-      </g>
-      <path d="M63 96 q7 -8 14 0 M93 96 q7 -8 14 0" fill="none" stroke="#3b4fa8" strokeWidth="3.4" strokeLinecap="round" />
-      <ellipse cx="52" cy="108" rx="9" ry="6" fill="#f6b9c9" opacity=".8" />
-      <ellipse cx="118" cy="108" rx="9" ry="6" fill="#f6b9c9" opacity=".8" />
-      <path d="M78 108 q7 14 14 0z" fill="#f48aa5" stroke="#3b4fa8" strokeWidth="2.6" strokeLinejoin="round" />
-      <path d="M82 6 L88 20 L103 21 L92 31 L96 46 L82 38 L68 46 L72 31 L61 21 L76 20Z" fill="#ffe27a" stroke="#7a62c9" strokeWidth="3" strokeLinejoin="round" transform="translate(4,-2)" />
-      <path d="M26 30 L31 40 L42 41 L34 48 L37 59 L26 53 L15 59 L18 48 L10 41 L21 40Z" fill="#f4a9d0" stroke="#7a62c9" strokeWidth="2.6" strokeLinejoin="round" transform="translate(2,4)" />
-      <path d="M142 24 L147 34 L158 35 L150 42 L153 53 L142 47 L131 53 L134 42 L126 35 L137 34Z" fill="#8fd3f2" stroke="#7a62c9" strokeWidth="2.6" strokeLinejoin="round" transform="translate(-2,8)" />
-    </svg>
-  );
+function textState(values?: TemplatePublicationValues) {
+  return JSON.stringify({
+    heading: values?.heading ?? "",
+    letterParagraphs: values?.letterParagraphs ?? BLANK_PARAGRAPHS,
+  });
 }
 
+/**
+ * Renders the exact uploaded HTML file inside an isolated iframe. The HTML's
+ * original CSS, fixed coordinates, SVG decorations, spiral art, and responsive
+ * scaler remain intact. Only its demo text/photos are blanked in the bundled
+ * source; this bridge connects its editable regions to Paper Stish publishing.
+ */
 export function ForeverAndEverTemplate({
-  values = {},
+  values,
   editing = false,
   onTextChange,
   onParagraphChange,
   onPhotoClick,
   onExit,
 }: Props) {
-  const heading = editing ? (values.heading ?? "") : values.heading?.trim() ?? "";
-  const paragraphs = values.letterParagraphs ?? EMPTY_PARAGRAPHS;
-  const photos = [...(values.images ?? []), ...EMPTY_PHOTOS].slice(0, 3);
+  const [html, setHtml] = useState(EMPTY_DOCUMENT);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeReady = useRef(false);
+  const latestValues = useRef(values);
+  const latestEditing = useRef(editing);
+  const lastFrameText = useRef<string | null>(null);
+
+  // These refs must reflect render-time state before any iframe message arrives.
+  latestValues.current = values;
+  latestEditing.current = editing;
+
+  useEffect(() => {
+    let alive = true;
+    fetch(TEMPLATE_URL, { cache: "force-cache" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not load the original love-letter template.");
+        const encoded = (await response.text()).trim();
+        const binary = window.atob(encoded);
+        const buffer = new ArrayBuffer(binary.length);
+        const bytes = new Uint8Array(buffer);
+        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+        const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
+        return new Response(stream).text();
+      })
+      .then((source) => {
+        if (alive) setHtml(source);
+      })
+      .catch(() => {
+        if (alive) setHtml(EMPTY_DOCUMENT);
+      });
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    const frame = iframeRef.current;
+    const onMessage = (event: MessageEvent<unknown>) => {
+      if (!frame || event.source !== frame.contentWindow || !event.data || typeof event.data !== "object") return;
+      const data = event.data as {
+        type?: unknown;
+        heading?: unknown;
+        letterParagraphs?: unknown;
+        index?: unknown;
+      };
+
+      if (data.type === "paper-stish:template-ready") {
+        iframeReady.current = true;
+        const current = latestValues.current;
+        lastFrameText.current = textState(current);
+        frame.contentWindow?.postMessage({
+          type: "paper-stish:init",
+          editing: latestEditing.current,
+          heading: current?.heading ?? "",
+          letterParagraphs: current?.letterParagraphs ?? BLANK_PARAGRAPHS,
+          images: current?.images ?? [],
+        }, "*");
+        return;
+      }
+
+      if (data.type === "paper-stish:choose-photo" && latestEditing.current &&
+          typeof data.index === "number" && data.index >= 0 && data.index < 3) {
+        onPhotoClick?.(data.index);
+        return;
+      }
+
+      if (data.type === "paper-stish:change" && latestEditing.current) {
+        const heading = typeof data.heading === "string" ? data.heading.slice(0, 200) : "";
+        const paragraphs = Array.isArray(data.letterParagraphs)
+          ? data.letterParagraphs.slice(0, 4).map((value) => typeof value === "string" ? value.slice(0, 1200) : "")
+          : BLANK_PARAGRAPHS;
+        const nextSnapshot = JSON.stringify({ heading, letterParagraphs: paragraphs });
+        lastFrameText.current = nextSnapshot;
+
+        const current = latestValues.current;
+        if (heading !== (current?.heading ?? "")) onTextChange?.("heading", heading);
+        paragraphs.forEach((value, index) => {
+          if (value !== (current?.letterParagraphs?.[index] ?? "")) onParagraphChange?.(index, value);
+        });
+      }
+    };
+
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [onTextChange, onParagraphChange, onPhotoClick]);
+
+  useEffect(() => {
+    const frame = iframeRef.current;
+    if (!iframeReady.current || !frame?.contentWindow) return;
+    frame.contentWindow.postMessage({ type: "paper-stish:update-photos", images: values?.images ?? [] }, "*");
+  }, [values?.images]);
+
+  useEffect(() => {
+    const snapshot = textState(values);
+    if (!iframeReady.current || snapshot === lastFrameText.current) return;
+    lastFrameText.current = snapshot;
+    iframeRef.current?.contentWindow?.postMessage({
+      type: "paper-stish:update-text",
+      heading: values?.heading ?? "",
+      letterParagraphs: values?.letterParagraphs ?? BLANK_PARAGRAPHS,
+    }, "*");
+  }, [values?.heading, values?.letterParagraphs]);
+
+  useEffect(() => {
+    if (!iframeReady.current) return;
+    iframeRef.current?.contentWindow?.postMessage({ type: "paper-stish:set-editing", editing }, "*");
+  }, [editing]);
 
   return (
-    <main className={styles.viewport}>
-      <article className={styles.page} aria-label="Notebook love letter">
-        <div className={styles.binding} aria-hidden="true" />
-        <div className={styles.topGrid}>
-          <section className={styles.letter} aria-label="Love letter">
-            {EMPTY_PARAGRAPHS.map((_, index) => editing ? (
-              <textarea
-                key={index}
-                className={`${styles.paragraphArea} ${styles["paragraph" + (index + 1)]}`}
-                value={paragraphs[index] ?? ""}
-                maxLength={1200}
-                rows={4}
-                aria-label={`Letter paragraph ${index + 1}`}
-                placeholder={`Write letter paragraph ${index + 1}…`}
-                onChange={(event) => onParagraphChange?.(index, event.currentTarget.value)}
-              />
-            ) : (
-              paragraphs[index]?.trim()
-                ? <p key={index} className={styles.paragraph}>{paragraphs[index]}</p>
-                : null
-            ))}
-          </section>
-
-          <section className={styles.strip} aria-label="Three personal photos">
-            {EMPTY_PHOTOS.map((_, index) => {
-              const photo = photos[index];
-              return (
-                <figure className={styles.photoFigure} key={index}>
-                  {editing ? (
-                    <button
-                      type="button"
-                      className={styles.photoSlot}
-                      onClick={() => onPhotoClick?.(index)}
-                      aria-label={"Choose photo " + (index + 1)}
-                    >
-                      {photo ? <img src={photo} alt="" /> : (
-                        <span className={styles.photoPlaceholder}>
-                          <span className={styles.plus} aria-hidden="true">+</span>
-                          <span>Add photo {index + 1}</span>
-                        </span>
-                      )}
-                    </button>
-                  ) : (
-                    <div className={styles.photoSlot} aria-label={photo ? "Personal photo " + (index + 1) : undefined}>
-                      {photo ? <img src={photo} alt="" /> : null}
-                    </div>
-                  )}
-                </figure>
-              );
-            })}
-            <span className={styles.spark} style={{left:"-18px",top:"-16px"}} aria-hidden="true">✦</span>
-            <span className={styles.sparkSmall} style={{left:"26px",top:"-14px"}} aria-hidden="true">✦</span>
-            <span className={styles.sparkSide} style={{right:"-17px",top:"82%"}} aria-hidden="true">✦</span>
-          </section>
-        </div>
-
-        <section className={styles.banner} aria-label="Letter heading">
-          <PuppyDecoration />
-          {editing ? (
-            <textarea
-              className={styles.headingInput}
-              value={heading}
-              maxLength={200}
-              rows={2}
-              aria-label="Letter heading"
-              placeholder="Add your heading…"
-              onChange={(event) => onTextChange?.("heading", event.currentTarget.value)}
-            />
-          ) : heading ? (
-            <h1 className={styles.heading}>{heading}</h1>
-          ) : null}
-          <span className={styles.corner} aria-hidden="true" />
-          <span className={styles.swoosh} aria-hidden="true" />
-          <span className={styles.bannerSpark} aria-hidden="true">✦</span>
-        </section>
-
-      </article>
-
+    <main className={styles.screen}>
+      <iframe
+        ref={iframeRef}
+        title="I love you forever and ever, my baby!"
+        className={styles.frame}
+        srcDoc={html}
+        sandbox="allow-scripts"
+        referrerPolicy="no-referrer"
+      />
       {editing && onExit && (
         <button type="button" className={styles.backButton} onClick={onExit} aria-label="Back to website templates">
           <span aria-hidden="true">←</span>
