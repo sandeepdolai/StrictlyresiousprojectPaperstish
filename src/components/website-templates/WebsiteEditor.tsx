@@ -70,12 +70,17 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
     captions: [],
   },
   "forever-and-ever": {
-    heading: "",
+    heading: "I love you forever\\nand ever, my baby !",
     message: "",
     photoUrl: null,
     images: ["", "", ""],
     captions: [],
-    letterParagraphs: ["", "", "", ""],
+    letterParagraphs: [
+      "From “good morning” to “good night” and random ‘i miss you’ or 'i love you' messages, it’s the small things that makes everything feel better. Every time we talk, it feels like you’re right here with me.",
+      "Sometimes we fight and we argue. I know it’s not always easy, but despite all of that, we still choose each other, we communicate, we fix, and try to make things work.",
+      "I just want to thank you for being part of my life, for making me happy, and for loving me even though we’re far apart. I can’t wait for the day when distance is just a memory, and I'll finally be with you. We can do all the things we’ve talked about when that happens.",
+      "For now, I’ll hold on to every memory and message we’ve shared. Our love story is still being written, and I’m so glad to be part of it :)",
+    ],
   },
 };
 
