@@ -42,6 +42,10 @@ function bridgeScript() {
   var slots = Array.from(document.querySelectorAll("[data-slot]"));
   var ids = ["b1", "b2", "b3", "b4", "hero"];
   var lastNotes = "";
+  var bridgeStyle = document.createElement("style");
+  bridgeStyle.textContent = ".txt.paper-stish-text{white-space:pre-wrap;max-width:65%;overflow-wrap:anywhere;min-width:0}.paper-stish-readonly #tipcard,.paper-stish-readonly #tipbtn,.paper-stish-readonly .photo-btn{display:none!important}.txt.paper-stish-editable{cursor:text}";
+  document.head.appendChild(bridgeStyle);
+  notes.forEach(function (el) { el.classList.add("paper-stish-text"); });
 
   function readNotes() {
     return notes.map(function (el) {
@@ -105,6 +109,7 @@ function bridgeScript() {
   }
   function setEditing(value) {
     editing = value === true;
+    document.documentElement.classList.toggle("paper-stish-readonly", !editing);
     notes.forEach(function (el) {
       el.contentEditable = editing ? "true" : "false";
       el.classList.toggle("paper-stish-editable", editing);
@@ -234,8 +239,9 @@ export function OurCalendarTemplate({
 
       if (data.type === "paper-stish:change" && latestEditing.current && Array.isArray(data.calendarNotes)) {
         const current = resolveNotes(latestValues.current);
+        const incomingNotes = data.calendarNotes as unknown[];
         const next = OUR_CALENDAR_DEFAULT_NOTES.map((fallback, index) => {
-          const value = data.calendarNotes?.[index];
+          const value = incomingNotes[index];
           return typeof value === "string" ? value.slice(0, 300) : current[index] ?? fallback;
         });
         lastFrameNotes.current = JSON.stringify(next);
