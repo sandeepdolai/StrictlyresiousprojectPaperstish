@@ -269,17 +269,6 @@
   opacity: .9;
 }
 
-.footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding-top: 12px;
-  color: rgba(91,111,150,.55);
-  font: 600 8px/1.4 ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
 .backButton {
   position: fixed;
   z-index: 75;
@@ -331,7 +320,6 @@
   .heading, .headingInput { font-size: clamp(27px, 7vw, 36px); }
   .headingInput { min-height: 78px; }
   .headingInput::placeholder { font-size: 17px; }
-  .footer { flex-direction: column; gap: 4px; font-size: 7px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
