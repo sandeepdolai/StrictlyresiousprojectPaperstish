@@ -106,7 +106,7 @@ export function ForeverAndEverTemplate({
         iframeReady.current = true;
         const current = latestValues.current;
         const currentText = resolveForeverAndEverText(current);
-        lastFrameText.current = JSON.stringify(currentText);
+        lastFrameText.current = textState(current);
         frame.contentWindow?.postMessage({
           type: "paper-stish:init",
           editing: latestEditing.current,
