@@ -1,6 +1,5 @@
 "use client";
 
-import type { KeyboardEvent } from "react";
 import type { TemplatePublicationValues } from "@/lib/publications";
 import styles from "./ForeverAndEverTemplate.module.css";
 
@@ -51,22 +50,6 @@ export function ForeverAndEverTemplate({
   const heading = editing ? (values.heading ?? "") : values.heading?.trim() ?? "";
   const paragraphs = values.letterParagraphs ?? EMPTY_PARAGRAPHS;
   const photos = [...(values.images ?? []), ...EMPTY_PHOTOS].slice(0, 3);
-
-  const photoKeyProps = (index: number) => ({
-    role: editing ? "button" as const : undefined,
-    tabIndex: editing ? 0 : undefined,
-    "aria-label": editing ? "Replace photo " + (index + 1) : undefined,
-    title: editing ? "Tap to choose a photo" : undefined,
-    onClick: editing ? () => onPhotoClick?.(index) : undefined,
-    onKeyDown: editing
-      ? (event: KeyboardEvent<HTMLDivElement>) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            onPhotoClick?.(index);
-          }
-        }
-      : undefined,
-  });
 
   return (
     <main className={styles.viewport}>
