@@ -43,6 +43,16 @@ export const WEBSITE_TEMPLATES: Project[] = [
     aspect: 1,
     media: [`${BASE_PATH}/website-templates/forever-and-ever-preview.svg`],
   },
+  {
+    title: "Our Calendar",
+    slug: "our-calendar",
+    description: "A scrapbook-style open-book calendar with editable memory notes, five personal photo slots, and a movable heart date marker.",
+    link: null,
+    tags: [],
+    awards: 0,
+    aspect: 1,
+    media: [`${BASE_PATH}/website-templates/our-calendar-preview.svg`],
+  },
 ];
 
 export interface IndexItem {
