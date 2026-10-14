@@ -45,10 +45,10 @@ function textState(values?: TemplatePublicationValues) {
 }
 
 /**
- * Renders the exact uploaded HTML file inside an isolated iframe. The HTML's
- * original CSS, fixed coordinates, SVG decorations, spiral art, and responsive
- * scaler remain intact. Only its demo text/photos are blanked in the bundled
- * source; this bridge connects its editable regions to Paper Stish publishing.
+ * Renders the uploaded HTML inside an isolated iframe while preserving its
+ * original layout, decorations, heading, and four letter paragraphs. If an
+ * old saved draft or publication has blank text fields, the original wording
+ * is restored before it reaches the iframe so blank legacy state cannot erase it.
  */
 export function ForeverAndEverTemplate({
   values,
