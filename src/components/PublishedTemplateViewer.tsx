@@ -112,7 +112,7 @@ export function PublishedTemplateViewer({
     }
 
     if (serverPublication.templateSlug === "forever-and-ever" && serverPublication.values) {
-      return <ForeverAndEverTemplate title={serverPublication.title} values={serverPublication.values} />;
+      return <ForeverAndEverTemplate values={serverPublication.values} />;
     }
 
     if (serverPublication.templateSlug === "smart-edit" && serverPublication.document) {
