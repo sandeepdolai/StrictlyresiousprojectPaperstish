@@ -32,6 +32,7 @@ export const PUBLISHABLE_TEMPLATE_SLUGS = [
   "photo-album",
   "love-heart",
   "forever-and-ever",
+  "our-calendar",
 ] as const;
 
 export type PublishableTemplateSlug = (typeof PUBLISHABLE_TEMPLATE_SLUGS)[number];
@@ -61,6 +62,8 @@ export interface TemplatePublicationValues {
   captions?: string[];
   /** Four editable paragraphs used by the notebook-style love-letter template. */
   letterParagraphs?: string[];
+  /** Four editable scrapbook notes used by the Our Calendar template. */
+  calendarNotes?: string[];
 }
 
 /** What the public viewer receives for a published website. */
@@ -151,6 +154,16 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
     }
   }
 
+  let calendarNotes: string[] | undefined;
+  if (v.calendarNotes !== undefined) {
+    if (!Array.isArray(v.calendarNotes) || v.calendarNotes.length > 4) return null;
+    calendarNotes = [];
+    for (const item of v.calendarNotes) {
+      if (typeof item !== "string" || item.length > 300) return null;
+      calendarNotes.push(item);
+    }
+  }
+
   const values: TemplatePublicationValues = {
     heading: boundedString(v.heading, 200),
     loveMessage: boundedString(v.loveMessage, 100),
@@ -165,6 +178,7 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
     images,
     captions,
     letterParagraphs,
+    calendarNotes,
   };
   return values;
 }

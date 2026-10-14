@@ -16,10 +16,11 @@ import {
   ForeverAndEverTemplate,
   resolveForeverAndEverText,
 } from "./ForeverAndEverTemplate";
+import { OUR_CALENDAR_DEFAULT_NOTES, OurCalendarTemplate } from "./OurCalendarTemplate";
 import { LoveOfMyLifeTemplate } from "./LoveOfMyLifeTemplate";
 import styles from "./WebsiteEditor.module.css";
 
-export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "photo-album" | "love-heart" | "forever-and-ever";
+export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "photo-album" | "love-heart" | "forever-and-ever" | "our-calendar";
 
 type EditableWebsiteField =
   | "heading"
@@ -81,6 +82,14 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
     captions: [],
     letterParagraphs: [...FOREVER_AND_EVER_TEXT_DEFAULTS.letterParagraphs],
   },
+  "our-calendar": {
+    heading: "Our Calendar",
+    message: "",
+    photoUrl: null,
+    images: ["", "", "", "", ""],
+    captions: [],
+    calendarNotes: [...OUR_CALENDAR_DEFAULT_NOTES],
+  },
 };
 
 const TEMPLATE_TITLES: Record<WebsiteEditorTemplateSlug, string> = {
@@ -89,6 +98,7 @@ const TEMPLATE_TITLES: Record<WebsiteEditorTemplateSlug, string> = {
   "photo-album": "Photo Album",
   "love-heart": "Love Heart",
   "forever-and-ever": "I love you forever and ever, my baby!",
+  "our-calendar": "Our Calendar",
 };
 
 function defaultValues(templateSlug: WebsiteEditorTemplateSlug): TemplatePublicationValues {
@@ -166,6 +176,7 @@ export function WebsiteEditor({
   const targetPhotoIndex = useRef(0);
   const isAlbum = templateSlug === "photo-album";
   const isForeverAndEver = templateSlug === "forever-and-ever";
+  const isOurCalendar = templateSlug === "our-calendar";
   const title = TEMPLATE_TITLES[templateSlug];
   const showPublishResult = Boolean(published && !hasUnpublishedChanges && !editingPublishDetails);
 
@@ -203,6 +214,14 @@ export function WebsiteEditor({
           const restoredLetterText = templateSlug === "forever-and-ever"
             ? resolveForeverAndEverText({ heading: savedHeading, letterParagraphs: savedLetterParagraphs })
             : { heading: savedHeading, letterParagraphs: savedLetterParagraphs };
+          const savedCalendarNotes = Array.isArray(raw.calendarNotes)
+            ? raw.calendarNotes.filter((item): item is string => typeof item === "string").slice(0, 4)
+            : [];
+          const restoredCalendarNotes = templateSlug === "our-calendar"
+            ? OUR_CALENDAR_DEFAULT_NOTES.map((fallback, index) => savedCalendarNotes[index]?.trim()
+                ? savedCalendarNotes[index].slice(0, 300)
+                : fallback)
+            : savedCalendarNotes;
           setValues({
             ...defaults,
             heading: restoredLetterText.heading,
@@ -218,6 +237,7 @@ export function WebsiteEditor({
             images,
             captions,
             letterParagraphs: restoredLetterText.letterParagraphs,
+            calendarNotes: restoredCalendarNotes,
           });
         }
         if (typeof draft.username === "string") setUsername(draft.username.slice(0, 60));
@@ -290,6 +310,13 @@ export function WebsiteEditor({
         setValues((current) => {
           const images = [...(current.images ?? [])];
           while (images.length < 3) images.push("");
+          images[index] = optimized;
+          return { ...current, images };
+        });
+      } else if (isOurCalendar) {
+        const index = Math.max(0, Math.min(4, targetPhotoIndex.current));
+        setValues((current) => {
+          const images = Array.from({ length: 5 }, (_, i) => current.images?.[i] ?? "");
           images[index] = optimized;
           return { ...current, images };
         });
@@ -387,6 +414,30 @@ export function WebsiteEditor({
           editing
           onTextChange={changeText}
           onPhotoSelected={choosePhotoFile}
+          onExit={onClose}
+        />
+      ) : isOurCalendar ? (
+        <OurCalendarTemplate
+          values={values}
+          editing
+          onNotesChange={(index, value) => {
+            setValues((current) => {
+              const calendarNotes = [...(current.calendarNotes ?? OUR_CALENDAR_DEFAULT_NOTES)];
+              while (calendarNotes.length < 4) calendarNotes.push(OUR_CALENDAR_DEFAULT_NOTES[calendarNotes.length]);
+              calendarNotes[index] = value;
+              return { ...current, calendarNotes };
+            });
+            setHasUnpublishedChanges(true);
+          }}
+          onPhotoClick={openPhotoChooser}
+          onPhotoFile={(index, file) => {
+            targetPhotoIndex.current = index;
+            void choosePhotoFile(file);
+          }}
+          onPhotosReset={() => {
+            setValues((current) => ({ ...current, images: ["", "", "", "", ""] }));
+            setHasUnpublishedChanges(true);
+          }}
           onExit={onClose}
         />
       ) : isForeverAndEver ? (
