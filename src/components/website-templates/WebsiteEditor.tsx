@@ -384,7 +384,6 @@ export function WebsiteEditor({
       ) : isForeverAndEver ? (
         <ForeverAndEverTemplate
           values={values}
-          title={values.heading}
           editing
           onTextChange={changeText}
           onParagraphChange={(index, value) => {
