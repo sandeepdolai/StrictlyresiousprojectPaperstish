@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { TemplatePublicationValues } from "@/lib/publications";
 import styles from "./OurCalendarTemplate.module.css";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const TEMPLATE_URL = `${BASE_PATH}/website-templates/our-calendar-source.html`;
+const BRIDGE_URL = `${BASE_PATH}/website-templates/our-calendar-bridge.js`;
 
 export const OUR_CALENDAR_DEFAULT_NOTES = Array.from({ length: 4 }, () =>
   "add a subheading add a\nsubheading add a subheading\nadd a subheading add a\nsubheading add a subheading\nadd a subheading add a\nsubheading add a subheading\nadd a subheading add a\nsubheading",
@@ -36,10 +37,9 @@ function photos(values?: TemplatePublicationValues) {
 }
 
 /**
- * Loads the original HTML as a real document URL so its book layout, CSS,
- * embedded artwork, calendar scripts and interaction render before the editor
- * bridge initializes. The previous runtime fetch silently fell back to an
- * empty cream document on any fetch error.
+ * Fetch the user's original HTML and attach the external editor bridge only
+ * to the iframe document at runtime. The saved HTML in public/ is never edited
+ * to wire editor messaging, and errors are shown instead of a blank canvas.
  */
 export function OurCalendarTemplate({
   values,
@@ -50,6 +50,8 @@ export function OurCalendarTemplate({
   onPhotosReset,
   onExit,
 }: Props) {
+  const [html, setHtml] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeReady = useRef(false);
   const latestValues = useRef(values);
@@ -58,6 +60,33 @@ export function OurCalendarTemplate({
 
   latestValues.current = values;
   latestEditing.current = editing;
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadTemplate() {
+      try {
+        const response = await fetch(TEMPLATE_URL, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Template request failed (HTTP ${response.status}).`);
+
+        const source = await response.text();
+        if (!source.includes("</body>")) throw new Error("The original calendar HTML is incomplete.");
+
+        const bridge = `<script src="${BRIDGE_URL}"></script>\n</body>`;
+        const documentHtml = source.replace("</body>", bridge);
+        if (active) {
+          setHtml(documentHtml);
+          setLoadError(null);
+        }
+      } catch (error) {
+        if (!active) return;
+        setLoadError(error instanceof Error ? error.message : "Unable to load Our Calendar.");
+      }
+    }
+
+    void loadTemplate();
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const frame = iframeRef.current;
@@ -140,30 +169,32 @@ export function OurCalendarTemplate({
 
   return (
     <main className={styles.screen}>
-      <iframe
-        ref={iframeRef}
-        title="Our Calendar"
-        className={styles.frame}
-        src={TEMPLATE_URL}
-        sandbox="allow-scripts"
-        referrerPolicy="no-referrer"
-        onLoad={() => {
-          const frame = iframeRef.current;
-          const doc = frame?.contentDocument;
-          if (!doc || doc.documentElement.dataset.paperStishBridgeLoaded === "true") return;
-
-          const bridge = doc.createElement("script");
-          bridge.src = `${BASE_PATH}/website-templates/our-calendar-bridge.js`;
-          bridge.async = false;
-          bridge.onload = () => {
-            doc.documentElement.dataset.paperStishBridgeLoaded = "true";
-          };
-          bridge.onerror = () => {
-            console.error("Unable to load the Our Calendar editor bridge.");
-          };
-          doc.head.appendChild(bridge);
-        }}
-      />
+      {html !== null ? (
+        <iframe
+          ref={iframeRef}
+          title="Our Calendar"
+          className={styles.frame}
+          srcDoc={html}
+          sandbox="allow-scripts"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <div
+          role={loadError ? "alert" : "status"}
+          style={{
+            display: "grid",
+            placeItems: "center",
+            minHeight: "100dvh",
+            padding: "24px",
+            textAlign: "center",
+            color: loadError ? "#9b1c31" : "#463d2d",
+            background: "#fdf5e1",
+            fontFamily: "system-ui, sans-serif",
+          }}
+        >
+          {loadError ?? "Loading Our Calendar…"}
+        </div>
+      )}
       {editing && onExit && (
         <button type="button" className={styles.backButton} onClick={onExit} aria-label="Back to website templates">
           <span aria-hidden="true">←</span>
