@@ -147,6 +147,22 @@ export function OurCalendarTemplate({
         src={TEMPLATE_URL}
         sandbox="allow-scripts"
         referrerPolicy="no-referrer"
+        onLoad={() => {
+          const frame = iframeRef.current;
+          const doc = frame?.contentDocument;
+          if (!doc || doc.documentElement.dataset.paperStishBridgeLoaded === "true") return;
+
+          const bridge = doc.createElement("script");
+          bridge.src = `${BASE_PATH}/website-templates/our-calendar-bridge.js`;
+          bridge.async = false;
+          bridge.onload = () => {
+            doc.documentElement.dataset.paperStishBridgeLoaded = "true";
+          };
+          bridge.onerror = () => {
+            console.error("Unable to load the Our Calendar editor bridge.");
+          };
+          doc.head.appendChild(bridge);
+        }}
       />
       {editing && onExit && (
         <button type="button" className={styles.backButton} onClick={onExit} aria-label="Back to website templates">
