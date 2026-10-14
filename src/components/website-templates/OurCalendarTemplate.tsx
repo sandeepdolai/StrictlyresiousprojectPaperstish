@@ -17,6 +17,8 @@ interface Props {
   editing?: boolean;
   onNotesChange?: (index: number, value: string) => void;
   onPhotoClick?: (index: number) => void;
+  onPhotoFile?: (index: number, file: File) => void;
+  onPhotosReset?: () => void;
   onExit?: () => void;
 }
 
@@ -144,6 +146,13 @@ function bridgeScript() {
   document.addEventListener("click", function (event) {
     var target = event.target instanceof Element ? event.target : null;
     if (!target) return;
+    var reset = target.closest("#resetphotos");
+    if (reset) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (editing) window.parent.postMessage({ type: "paper-stish:reset-photos" }, "*");
+      return;
+    }
     var slot = target.closest("[data-slot]");
     var heroButton = target.closest("#heroBtn");
     if (slot || heroButton) {
@@ -154,6 +163,18 @@ function bridgeScript() {
       var index = ids.indexOf(key);
       window.parent.postMessage({ type: "paper-stish:choose-photo", index: index }, "*");
     }
+  }, true);
+  document.addEventListener("drop", function (event) {
+    if (!editing) return;
+    var target = event.target instanceof Element ? event.target : null;
+    var slot = target && target.closest("[data-slot]");
+    var file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+    if (!slot || !file || !/^image\\//.test(file.type)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    slot.classList.remove("over");
+    var index = ids.indexOf(slot.getAttribute("data-slot"));
+    window.parent.postMessage({ type: "paper-stish:drop-photo", index: index, file: file }, "*");
   }, true);
   notes.forEach(function (el, index) {
     el.addEventListener("input", function () {
@@ -184,6 +205,8 @@ export function OurCalendarTemplate({
   editing = false,
   onNotesChange,
   onPhotoClick,
+  onPhotoFile,
+  onPhotosReset,
   onExit,
 }: Props) {
   const [html, setHtml] = useState(EMPTY_DOCUMENT);
@@ -216,7 +239,7 @@ export function OurCalendarTemplate({
     const frame = iframeRef.current;
     const onMessage = (event: MessageEvent<unknown>) => {
       if (!frame || event.source !== frame.contentWindow || !event.data || typeof event.data !== "object") return;
-      const data = event.data as { type?: unknown; calendarNotes?: unknown; index?: unknown };
+      const data = event.data as { type?: unknown; calendarNotes?: unknown; index?: unknown; file?: unknown };
 
       if (data.type === "paper-stish:template-ready") {
         iframeReady.current = true;
@@ -237,6 +260,18 @@ export function OurCalendarTemplate({
         return;
       }
 
+      if (data.type === "paper-stish:drop-photo" && latestEditing.current &&
+          typeof data.index === "number" && data.index >= 0 && data.index < 5 &&
+          typeof File !== "undefined" && data.file instanceof File) {
+        onPhotoFile?.(data.index, data.file);
+        return;
+      }
+
+      if (data.type === "paper-stish:reset-photos" && latestEditing.current) {
+        onPhotosReset?.();
+        return;
+      }
+
       if (data.type === "paper-stish:change" && latestEditing.current && Array.isArray(data.calendarNotes)) {
         const current = resolveNotes(latestValues.current);
         const incomingNotes = data.calendarNotes as unknown[];
@@ -253,7 +288,7 @@ export function OurCalendarTemplate({
 
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [onNotesChange, onPhotoClick]);
+  }, [onNotesChange, onPhotoClick, onPhotoFile, onPhotosReset]);
 
   useEffect(() => {
     const frame = iframeRef.current;
