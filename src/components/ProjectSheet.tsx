@@ -421,7 +421,7 @@ export function ProjectSheet({
         }}
       >
         <div className="relative z-10 flex flex-col items-start s:flex-1 pt-40 s:pt-0 px-15 s:px-0">
-          <h1 className="relative whitespace-nowrap text-35 s:text-45 font-normal leading-none tracking-[-0.05em] text-black" {...reveal(0.1)}>
+          <h1 className="relative max-w-full whitespace-normal break-words text-30 s:text-45 font-normal leading-[1.08] s:leading-none tracking-[-0.05em] text-black" {...reveal(0.1)}>
             {project.title}
           </h1>
           <div className="mt-15 s:mt-20 max-w-[40rem] text-14 s:text-16 tracking-[-0.035em] text-black" {...reveal(0.22)}>
