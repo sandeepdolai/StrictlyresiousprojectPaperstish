@@ -23,7 +23,7 @@ interface Props {
 function resolveNotes(values?: TemplatePublicationValues) {
   return OUR_CALENDAR_DEFAULT_NOTES.map((fallback, index) => {
     const value = values?.calendarNotes?.[index];
-    return typeof value === "string" && value.trim() ? value : fallback;
+    return typeof value === "string" ? value : fallback;
   });
 }
 
