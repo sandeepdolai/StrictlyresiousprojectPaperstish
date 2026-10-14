@@ -7,7 +7,15 @@ import styles from "./ForeverAndEverTemplate.module.css";
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const TEMPLATE_URL = `${BASE_PATH}/website-templates/forever-and-ever.html.gz.b64`;
 const EMPTY_DOCUMENT = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{width:100%;height:100%;margin:0;background:#e9edf5;overflow:hidden}</style></head><body></body></html>';
-const BLANK_PARAGRAPHS = ["", "", "", ""];
+export const FOREVER_AND_EVER_TEXT_DEFAULTS = {
+  heading: "I love you forever\nand ever, my baby !",
+  letterParagraphs: [
+    "From “good morning” to “good night” and random ‘i miss you’ or 'i love you' messages, it’s the small things that makes everything feel better. Every time we talk, it feels like you’re right here with me.",
+    "Sometimes we fight and we argue. I know it’s not always easy, but despite all of that, we still choose each other, we communicate, we fix, and try to make things work.",
+    "I just want to thank you for being part of my life, for making me happy, and for loving me even though we’re far apart. I can’t wait for the day when distance is just a memory, and I'll finally be with you. We can do all the things we’ve talked about when that happens.",
+    "For now, I’ll hold on to every memory and message we’ve shared. Our love story is still being written, and I’m so glad to be part of it :)",
+  ],
+};
 
 interface Props {
   values?: TemplatePublicationValues;
@@ -18,11 +26,22 @@ interface Props {
   onExit?: () => void;
 }
 
-function textState(values?: TemplatePublicationValues) {
-  return JSON.stringify({
-    heading: values?.heading ?? "",
-    letterParagraphs: values?.letterParagraphs ?? BLANK_PARAGRAPHS,
+export function resolveForeverAndEverText(
+  values?: Pick<TemplatePublicationValues, "heading" | "letterParagraphs">,
+) {
+  const heading =
+    typeof values?.heading === "string" && values.heading.trim()
+      ? values.heading
+      : FOREVER_AND_EVER_TEXT_DEFAULTS.heading;
+  const letterParagraphs = FOREVER_AND_EVER_TEXT_DEFAULTS.letterParagraphs.map((fallback, index) => {
+    const value = values?.letterParagraphs?.[index];
+    return typeof value === "string" && value.trim() ? value : fallback;
   });
+  return { heading, letterParagraphs };
+}
+
+function textState(values?: TemplatePublicationValues) {
+  return JSON.stringify(resolveForeverAndEverText(values));
 }
 
 /**
@@ -86,12 +105,13 @@ export function ForeverAndEverTemplate({
       if (data.type === "paper-stish:template-ready") {
         iframeReady.current = true;
         const current = latestValues.current;
-        lastFrameText.current = textState(current);
+        const currentText = resolveForeverAndEverText(current);
+        lastFrameText.current = JSON.stringify(currentText);
         frame.contentWindow?.postMessage({
           type: "paper-stish:init",
           editing: latestEditing.current,
-          heading: current?.heading ?? "",
-          letterParagraphs: current?.letterParagraphs ?? BLANK_PARAGRAPHS,
+          heading: currentText.heading,
+          letterParagraphs: currentText.letterParagraphs,
           images: current?.images ?? [],
         }, "*");
         return;
@@ -104,17 +124,18 @@ export function ForeverAndEverTemplate({
       }
 
       if (data.type === "paper-stish:change" && latestEditing.current) {
-        const heading = typeof data.heading === "string" ? data.heading.slice(0, 200) : "";
+        const current = latestValues.current;
+        const currentText = resolveForeverAndEverText(current);
+        const heading = typeof data.heading === "string" ? data.heading.slice(0, 200) : currentText.heading;
         const paragraphs = Array.isArray(data.letterParagraphs)
           ? data.letterParagraphs.slice(0, 4).map((value) => typeof value === "string" ? value.slice(0, 1200) : "")
-          : BLANK_PARAGRAPHS;
+          : currentText.letterParagraphs;
         const nextSnapshot = JSON.stringify({ heading, letterParagraphs: paragraphs });
         lastFrameText.current = nextSnapshot;
 
-        const current = latestValues.current;
-        if (heading !== (current?.heading ?? "")) onTextChange?.("heading", heading);
+        if (heading !== currentText.heading) onTextChange?.("heading", heading);
         paragraphs.forEach((value, index) => {
-          if (value !== (current?.letterParagraphs?.[index] ?? "")) onParagraphChange?.(index, value);
+          if (value !== currentText.letterParagraphs[index]) onParagraphChange?.(index, value);
         });
       }
     };
@@ -130,13 +151,14 @@ export function ForeverAndEverTemplate({
   }, [values?.images]);
 
   useEffect(() => {
-    const snapshot = textState(values);
+    const currentText = resolveForeverAndEverText(values);
+    const snapshot = JSON.stringify(currentText);
     if (!iframeReady.current || snapshot === lastFrameText.current) return;
     lastFrameText.current = snapshot;
     iframeRef.current?.contentWindow?.postMessage({
       type: "paper-stish:update-text",
-      heading: values?.heading ?? "",
-      letterParagraphs: values?.letterParagraphs ?? BLANK_PARAGRAPHS,
+      heading: currentText.heading,
+      letterParagraphs: currentText.letterParagraphs,
     }, "*");
   }, [values?.heading, values?.letterParagraphs]);
 
