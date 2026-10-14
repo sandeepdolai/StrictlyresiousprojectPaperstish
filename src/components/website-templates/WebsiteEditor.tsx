@@ -187,7 +187,7 @@ export function WebsiteEditor({
             ? raw.images.filter((item): item is string =>
                 typeof item === "string" &&
                 item.length <= MAX_PHOTO_DATA_LENGTH &&
-                /^(data:image\/|https?:\/\/)/.test(item)).slice(0, MAX_ALBUM_PHOTOS)
+                (item === "" || /^(data:image\/|https?:\/\/)/.test(item))).slice(0, MAX_ALBUM_PHOTOS)
             : [];
           const captions = Array.isArray(raw.captions)
             ? raw.captions.filter((item): item is string => typeof item === "string").slice(0, MAX_ALBUM_PHOTOS)
