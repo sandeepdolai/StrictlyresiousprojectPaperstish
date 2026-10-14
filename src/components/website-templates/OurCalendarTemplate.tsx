@@ -5,7 +5,7 @@ import type { TemplatePublicationValues } from "@/lib/publications";
 import styles from "./OurCalendarTemplate.module.css";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const TEMPLATE_URL = `${BASE_PATH}/website-templates/our-calendar-source.html`;
+const TEMPLATE_URL = `${BASE_PATH}/website-templates/our-calendar-frame`;
 
 export const OUR_CALENDAR_DEFAULT_NOTES = Array.from({ length: 4 }, () =>
   "add a subheading add a\nsubheading add a subheading\nadd a subheading add a\nsubheading add a subheading\nadd a subheading add a\nsubheading add a subheading\nadd a subheading add a\nsubheading",
