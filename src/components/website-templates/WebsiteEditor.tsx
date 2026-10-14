@@ -11,7 +11,11 @@ import {
 } from "@/lib/publications";
 import { PhotoAlbumTemplate, DEFAULT_ALBUM_CAPTIONS, DEFAULT_ALBUM_PHOTOS } from "./PhotoAlbumTemplate";
 import { LoveHeartTemplate } from "./LoveHeartTemplate";
-import { ForeverAndEverTemplate } from "./ForeverAndEverTemplate";
+import {
+  FOREVER_AND_EVER_TEXT_DEFAULTS,
+  ForeverAndEverTemplate,
+  resolveForeverAndEverText,
+} from "./ForeverAndEverTemplate";
 import { LoveOfMyLifeTemplate } from "./LoveOfMyLifeTemplate";
 import styles from "./WebsiteEditor.module.css";
 
@@ -70,17 +74,12 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
     captions: [],
   },
   "forever-and-ever": {
-    heading: "I love you forever\\nand ever, my baby !",
+    heading: FOREVER_AND_EVER_TEXT_DEFAULTS.heading,
     message: "",
     photoUrl: null,
     images: ["", "", ""],
     captions: [],
-    letterParagraphs: [
-      "From “good morning” to “good night” and random ‘i miss you’ or 'i love you' messages, it’s the small things that makes everything feel better. Every time we talk, it feels like you’re right here with me.",
-      "Sometimes we fight and we argue. I know it’s not always easy, but despite all of that, we still choose each other, we communicate, we fix, and try to make things work.",
-      "I just want to thank you for being part of my life, for making me happy, and for loving me even though we’re far apart. I can’t wait for the day when distance is just a memory, and I'll finally be with you. We can do all the things we’ve talked about when that happens.",
-      "For now, I’ll hold on to every memory and message we’ve shared. Our love story is still being written, and I’m so glad to be part of it :)",
-    ],
+    letterParagraphs: [...FOREVER_AND_EVER_TEXT_DEFAULTS.letterParagraphs],
   },
 };
 
@@ -197,12 +196,16 @@ export function WebsiteEditor({
           const captions = Array.isArray(raw.captions)
             ? raw.captions.filter((item): item is string => typeof item === "string").slice(0, MAX_ALBUM_PHOTOS)
             : [];
-          const letterParagraphs = Array.isArray(raw.letterParagraphs)
+          const savedHeading = text("heading", defaults.heading ?? "", 160);
+          const savedLetterParagraphs = Array.isArray(raw.letterParagraphs)
             ? raw.letterParagraphs.filter((item): item is string => typeof item === "string").slice(0, 4)
             : defaults.letterParagraphs;
+          const restoredLetterText = templateSlug === "forever-and-ever"
+            ? resolveForeverAndEverText({ heading: savedHeading, letterParagraphs: savedLetterParagraphs })
+            : { heading: savedHeading, letterParagraphs: savedLetterParagraphs };
           setValues({
             ...defaults,
-            heading: text("heading", defaults.heading ?? "", 160),
+            heading: restoredLetterText.heading,
             loveMessage: text("loveMessage", defaults.loveMessage ?? "", 100),
             intro: text("intro", defaults.intro ?? "", 400),
             noteHeading: text("noteHeading", defaults.noteHeading ?? "", 240),
@@ -214,7 +217,7 @@ export function WebsiteEditor({
             photoUrl,
             images,
             captions,
-            letterParagraphs,
+            letterParagraphs: restoredLetterText.letterParagraphs,
           });
         }
         if (typeof draft.username === "string") setUsername(draft.username.slice(0, 60));
