@@ -11,10 +11,11 @@ import {
 } from "@/lib/publications";
 import { PhotoAlbumTemplate, DEFAULT_ALBUM_CAPTIONS, DEFAULT_ALBUM_PHOTOS } from "./PhotoAlbumTemplate";
 import { LoveHeartTemplate } from "./LoveHeartTemplate";
+import { ForeverAndEverTemplate } from "./ForeverAndEverTemplate";
 import { LoveOfMyLifeTemplate } from "./LoveOfMyLifeTemplate";
 import styles from "./WebsiteEditor.module.css";
 
-export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "photo-album" | "love-heart";
+export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "photo-album" | "love-heart" | "forever-and-ever";
 
 type EditableWebsiteField =
   | "heading"
@@ -68,6 +69,14 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
     images: [],
     captions: [],
   },
+  "forever-and-ever": {
+    heading: "",
+    message: "",
+    photoUrl: null,
+    images: ["", "", ""],
+    captions: [],
+    letterParagraphs: ["", "", "", ""],
+  },
 };
 
 const TEMPLATE_TITLES: Record<WebsiteEditorTemplateSlug, string> = {
@@ -75,6 +84,7 @@ const TEMPLATE_TITLES: Record<WebsiteEditorTemplateSlug, string> = {
   "birthday-template": "Birthday Website",
   "photo-album": "Photo Album",
   "love-heart": "Love Heart",
+  "forever-and-ever": "I love you forever and ever, my baby!",
 };
 
 function defaultValues(templateSlug: WebsiteEditorTemplateSlug): TemplatePublicationValues {
@@ -137,7 +147,7 @@ export function WebsiteEditor({
   const [values, setValues] = useState<TemplatePublicationValues>(() => defaultValues(templateSlug));
   const [username, setUsername] = useState("");
   const [websiteName, setWebsiteName] = useState(
-    templateSlug === "photo-album" ? "photo-album" : templateSlug === "birthday-template" ? "birthday" : templateSlug === "love-heart" ? "love-heart" : "our-story",
+    templateSlug === "photo-album" ? "photo-album" : templateSlug === "birthday-template" ? "birthday" : templateSlug === "love-heart" ? "love-heart" : templateSlug === "forever-and-ever" ? "forever-and-ever" : "our-story",
   );
   const [draftReady, setDraftReady] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -151,6 +161,7 @@ export function WebsiteEditor({
   const publishedLinkInput = useRef<HTMLInputElement>(null);
   const targetPhotoIndex = useRef(0);
   const isAlbum = templateSlug === "photo-album";
+  const isForeverAndEver = templateSlug === "forever-and-ever";
   const title = TEMPLATE_TITLES[templateSlug];
   const showPublishResult = Boolean(published && !hasUnpublishedChanges && !editingPublishDetails);
 
@@ -176,11 +187,14 @@ export function WebsiteEditor({
             ? raw.images.filter((item): item is string =>
                 typeof item === "string" &&
                 item.length <= MAX_PHOTO_DATA_LENGTH &&
-                /^(data:image\/|https?:\/\/)/.test(item)).slice(0, MAX_ALBUM_PHOTOS)
+                (item === "" || /^(data:image\/|https?:\/\/)/.test(item))).slice(0, MAX_ALBUM_PHOTOS)
             : [];
           const captions = Array.isArray(raw.captions)
             ? raw.captions.filter((item): item is string => typeof item === "string").slice(0, MAX_ALBUM_PHOTOS)
             : [];
+          const letterParagraphs = Array.isArray(raw.letterParagraphs)
+            ? raw.letterParagraphs.filter((item): item is string => typeof item === "string").slice(0, 4)
+            : defaults.letterParagraphs;
           setValues({
             ...defaults,
             heading: text("heading", defaults.heading ?? "", 160),
@@ -195,6 +209,7 @@ export function WebsiteEditor({
             photoUrl,
             images,
             captions,
+            letterParagraphs,
           });
         }
         if (typeof draft.username === "string") setUsername(draft.username.slice(0, 60));
@@ -261,6 +276,14 @@ export function WebsiteEditor({
             ...DEFAULT_ALBUM_CAPTIONS.slice(savedCaptions.length),
           ].slice(0, MAX_ALBUM_PHOTOS);
           return { ...current, images: photos, captions };
+        });
+      } else if (isForeverAndEver) {
+        const index = Math.max(0, Math.min(2, targetPhotoIndex.current));
+        setValues((current) => {
+          const images = [...(current.images ?? [])];
+          while (images.length < 3) images.push("");
+          images[index] = optimized;
+          return { ...current, images };
         });
       } else {
         setValues((current) => ({ ...current, photoUrl: optimized }));
@@ -356,6 +379,23 @@ export function WebsiteEditor({
           editing
           onTextChange={changeText}
           onPhotoSelected={choosePhotoFile}
+          onExit={onClose}
+        />
+      ) : isForeverAndEver ? (
+        <ForeverAndEverTemplate
+          values={values}
+          editing
+          onTextChange={changeText}
+          onParagraphChange={(index, value) => {
+            setValues((current) => {
+              const letterParagraphs = [...(current.letterParagraphs ?? ["", "", "", ""])];
+              while (letterParagraphs.length < 4) letterParagraphs.push("");
+              letterParagraphs[index] = value;
+              return { ...current, letterParagraphs };
+            });
+            setHasUnpublishedChanges(true);
+          }}
+          onPhotoClick={openPhotoChooser}
           onExit={onClose}
         />
       ) : isAlbum ? (

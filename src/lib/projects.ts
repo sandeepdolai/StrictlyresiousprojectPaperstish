@@ -33,6 +33,16 @@ export const WEBSITE_TEMPLATES: Project[] = [
     aspect: 1,
     media: [`${BASE_PATH}/website-templates/love-heart-preview.svg`],
   },
+  {
+    title: "I love you forever and ever, my baby!",
+    slug: "forever-and-ever",
+    description: "A blank, editable notebook-style love letter with three personal photo slots and a soft blue paper theme.",
+    link: null,
+    tags: [],
+    awards: 0,
+    aspect: 1,
+    media: [`${BASE_PATH}/website-templates/forever-and-ever-preview.svg`],
+  },
 ];
 
 export interface IndexItem {
