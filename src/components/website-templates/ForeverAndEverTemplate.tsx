@@ -7,7 +7,6 @@ type EditableField = "heading";
 
 interface Props {
   values?: TemplatePublicationValues;
-  title?: string;
   editing?: boolean;
   onTextChange?: (field: EditableField, value: string) => void;
   onParagraphChange?: (index: number, value: string) => void;
@@ -40,7 +39,6 @@ function PuppyDecoration() {
 
 export function ForeverAndEverTemplate({
   values = {},
-  title,
   editing = false,
   onTextChange,
   onParagraphChange,
@@ -128,10 +126,6 @@ export function ForeverAndEverTemplate({
           <span className={styles.bannerSpark} aria-hidden="true">✦</span>
         </section>
 
-        <footer className={styles.footer}>
-          <span>MADE WITH A LITTLE EXTRA LOVE</span>
-          <span>{title?.trim() || "YOUR WORDS, YOUR MEMORIES"} · paper stish</span>
-        </footer>
       </article>
 
       {editing && onExit && (
