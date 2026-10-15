@@ -2,7 +2,8 @@
 (function () {
   "use strict";
 
-  var editing = false;
+  var bridgeScript = document.currentScript;
+  var editing = Boolean(bridgeScript && bridgeScript.getAttribute("data-initial-editing") === "true");
   var notes = Array.prototype.slice.call(
     document.querySelectorAll(".left .txt[contenteditable]")
   );
@@ -15,7 +16,7 @@
 
   style.textContent =
     ".txt.paper-stish-text{white-space:pre-wrap;max-width:65%;overflow-wrap:anywhere;min-width:0}" +
-    ".paper-stish-readonly .photo-btn{display:none!important}" +
+    ".paper-stish-readonly #tipcard,.paper-stish-readonly #tipbtn,.paper-stish-readonly .photo-btn{display:none!important}" +
     ".txt.paper-stish-editable{cursor:text}";
   document.head.appendChild(style);
 
@@ -224,7 +225,7 @@
     });
   });
 
-  setEditing(false);
+  setEditing(editing);
   announceReady();
   readyTimer = setInterval(announceReady, 300);
   window.addEventListener("pagehide", function () {
