@@ -21,6 +21,7 @@ interface Props {
   onNotesChange?: (index: number, value: string) => void;
   onPhotoClick?: (index: number) => void;
   onPhotoFile?: (index: number, file: File) => void;
+  onPhotosReset?: () => void;
   onExit?: () => void;
 }
 
@@ -194,6 +195,7 @@ export function OurCalendarTemplate({
   onNotesChange,
   onPhotoClick,
   onPhotoFile,
+  onPhotosReset,
   onExit,
 }: Props) {
   const bookItemsRef = useRef<HTMLDivElement>(null);
@@ -206,12 +208,22 @@ export function OurCalendarTemplate({
     return () => document.documentElement.classList.remove("paper-stish-calendar-active");
   }, []);
 
+  useEffect(() => {
+    if (!tipsOpen) return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setTipsOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [tipsOpen]);
+
   const today = useMemo(() => new Date(), []);
   const [view, setView] = useState<MonthView>(() => ({ year: today.getFullYear(), month: today.getMonth() }));
   const [selectedDay, setSelectedDay] = useState(today.getDate());
   const [svgSize, setSvgSize] = useState({ width: 990, height: 740 });
   const [dragPosition, setDragPosition] = useState<Point | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [tipsOpen, setTipsOpen] = useState(false);
   const notes = useMemo(() => resolveNotes(values), [values?.calendarNotes]);
   const images = useMemo(
     () => Array.from({ length: 5 }, (_, index) => typeof values?.images?.[index] === "string" ? values.images[index] as string : ""),
@@ -560,6 +572,39 @@ export function OurCalendarTemplate({
           </svg>
         </section>
       </div>
+
+      {editing && (
+        <>
+          {tipsOpen && (
+            <aside className={styles.tipPanel} role="dialog" aria-modal="false" aria-labelledby="calendar-tip-title">
+              <div className={styles.tipHeader}>
+                <h2 id="calendar-tip-title">What you can do</h2>
+                <button type="button" className={styles.tipClose} onClick={() => setTipsOpen(false)} aria-label="Close tips">×</button>
+              </div>
+              <ul className={styles.tipList}>
+                <li><span className={styles.tipIcon} aria-hidden="true">♥</span><span><strong>Move the heart</strong>Drag it, tap any date, or use the arrow keys.</span></li>
+                <li><span className={styles.tipIcon} aria-hidden="true">📅</span><span><strong>Change the month</strong>Use the arrows on the photo. “Today” brings you back.</span></li>
+                <li><span className={styles.tipIcon} aria-hidden="true">📷</span><span><strong>Add your photos</strong>Tap any photo to replace it, or drop a picture onto it.</span></li>
+                <li><span className={styles.tipIcon} aria-hidden="true">✏️</span><span><strong>Write your own words</strong>Tap any “add a subheading” text and type.</span></li>
+              </ul>
+              <div className={styles.tipActions}>
+                <button type="button" className={styles.tipReset} onClick={() => { onPhotosReset?.(); setTipsOpen(false); }}>Reset photos</button>
+                <button type="button" className={styles.tipGotIt} onClick={() => setTipsOpen(false)}>Got it</button>
+              </div>
+            </aside>
+          )}
+          <button
+            type="button"
+            className={styles.tipButton}
+            aria-expanded={tipsOpen}
+            aria-controls="calendar-tip-title"
+            onClick={() => setTipsOpen((open) => !open)}
+          >
+            <span aria-hidden="true">💡</span>
+            Tips
+          </button>
+        </>
+      )}
 
       {editing && onExit && (
         <button type="button" className={styles.backButton} onClick={onExit} aria-label="Back to website templates">
