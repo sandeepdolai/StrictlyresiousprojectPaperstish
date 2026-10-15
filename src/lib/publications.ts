@@ -21,6 +21,7 @@ import type { SmartEditDocument } from "@/components/smartedit/types";
 import { validateSmartEditDocument } from "@/components/smartedit/publish";
 import { slugPart } from "@/lib/slug";
 import { durableTemplateValues } from "@/lib/cloudinaryUpload";
+import { isBundledPublicImagePath } from "@/lib/templateImageValue";
 
 export { slugPart };
 
@@ -132,7 +133,11 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
     if (!Array.isArray(v.images) || v.images.length > 6) return null;
     images = [];
     for (const item of v.images) {
-      if (typeof item !== "string" || item.length > 560_000 || (item !== "" && !PHOTO_URL_RE.test(item))) return null;
+      if (
+        typeof item !== "string" ||
+        item.length > 560_000 ||
+        (item !== "" && !PHOTO_URL_RE.test(item) && !isBundledPublicImagePath(item))
+      ) return null;
       images.push(item);
     }
   }

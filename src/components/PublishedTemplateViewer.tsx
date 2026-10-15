@@ -58,34 +58,37 @@ export function PublishedTemplateViewer({
   useEffect(() => {
     document.documentElement.classList.add("paper-stish-viewer");
 
+    const syncRoutePublication = () => {
+      // The route can change without a full document reload (for example,
+      // opening a republished link in an already-mounted viewer). Never keep
+      // the previous link's text or photos when the server payload changes.
+      const nextPublication = initialPublication
+        ? validatePublishedPayload(initialPublication)
+        : null;
+      setSmartEdit(null);
+      setServerPublication(nextPublication);
+      setPhase(nextPublication ? "ready" : "missing");
+    };
+
     const readFragment = () => {
       const hash = window.location.hash.replace(/^#/, "");
       const value = hash.startsWith("data=") ? hash.slice(5) : "";
-      if (!value) return false;
-      // Legacy #data= link — the payload travels in the fragment.
+      if (!value) {
+        syncRoutePublication();
+        return;
+      }
+
+      // Legacy #data= links still decode client-side after hydration.
       const smart = decodeSmartEditPayload(value);
       setSmartEdit(smart);
       setServerPublication(null);
       setPhase("ready");
-      return true;
     };
 
-    if (readFragment()) {
-      window.addEventListener("hashchange", readFragment);
-      return () => {
-        window.removeEventListener("hashchange", readFragment);
-        document.documentElement.classList.remove("paper-stish-viewer");
-      };
-    }
-
-    // No fragment: the server already resolved the publication — either it
-    // is rendered above (phase "ready") or this link does not resolve.
-    const finishServerLookup = () => {
-      setPhase((current) => (current === "loading" ? "missing" : current));
-    };
-    finishServerLookup();
-
+    readFragment();
+    window.addEventListener("hashchange", readFragment);
     return () => {
+      window.removeEventListener("hashchange", readFragment);
       document.documentElement.classList.remove("paper-stish-viewer");
     };
   }, [templateId, username, viewerName, initialPublication]);
@@ -109,25 +112,30 @@ export function PublishedTemplateViewer({
   }
 
   if (serverPublication) {
+    // Remount the selected renderer when the published snapshot changes.
+    // This is especially important for templates that initialize a document
+    // or animation in an iframe and must receive a fresh initial snapshot.
+    const publicationKey = `${templateId}:${serverPublication.templateSlug}:${serverPublication.publishedAt}`;
+
     if (serverPublication.templateSlug === "love-heart" && serverPublication.values) {
-      return <LoveHeartTemplate values={serverPublication.values} />;
+      return <LoveHeartTemplate key={publicationKey} values={serverPublication.values} />;
     }
 
     if (serverPublication.templateSlug === "forever-and-ever" && serverPublication.values) {
-      return <ForeverAndEverTemplate values={serverPublication.values} />;
+      return <ForeverAndEverTemplate key={publicationKey} values={serverPublication.values} />;
     }
 
     if (serverPublication.templateSlug === "our-calendar" && serverPublication.values) {
-      return <OurCalendarTemplate values={serverPublication.values} />;
+      return <OurCalendarTemplate key={publicationKey} values={serverPublication.values} />;
     }
 
     if (serverPublication.templateSlug === "birthday-today" && serverPublication.values) {
-      return <BirthdayTodayTemplate values={serverPublication.values} />;
+      return <BirthdayTodayTemplate key={publicationKey} values={serverPublication.values} />;
     }
 
     if (serverPublication.templateSlug === "smart-edit" && serverPublication.document) {
       return (
-        <SmartEditViewer
+        <SmartEditViewer key={publicationKey}
           initialPayload={{
             version: 1,
             templateSlug: "smart-edit",
@@ -146,6 +154,7 @@ export function PublishedTemplateViewer({
     ) {
       return (
         <LoveOfMyLifeTemplate
+          key={publicationKey}
           title={serverPublication.title}
           values={serverPublication.values}
           variant={serverPublication.templateSlug === "birthday-template" ? "birthday" : "love"}
@@ -154,7 +163,7 @@ export function PublishedTemplateViewer({
     }
 
     if (serverPublication.templateSlug === "photo-album" && serverPublication.values) {
-      return <PhotoAlbumTemplate title={serverPublication.title} values={serverPublication.values} />;
+      return <PhotoAlbumTemplate key={publicationKey} title={serverPublication.title} values={serverPublication.values} />;
     }
   }
 
