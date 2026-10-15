@@ -11,12 +11,6 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_BASE_PATH: "",
   },
   output: "standalone",
-  outputFileTracingIncludes: {
-    "/api/our-calendar-frame": [
-      "./public/website-templates/our-calendar-source.html",
-      "./public/website-templates/our-calendar-bridge.js",
-    ],
-  },
   images: {
     unoptimized: true,
   },

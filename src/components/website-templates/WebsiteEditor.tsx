@@ -434,10 +434,6 @@ export function WebsiteEditor({
             targetPhotoIndex.current = index;
             void choosePhotoFile(file);
           }}
-          onPhotosReset={() => {
-            setValues((current) => ({ ...current, images: ["", "", "", "", ""] }));
-            setHasUnpublishedChanges(true);
-          }}
           onExit={onClose}
         />
       ) : isForeverAndEver ? (

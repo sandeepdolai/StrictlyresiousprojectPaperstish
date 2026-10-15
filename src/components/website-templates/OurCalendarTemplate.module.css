@@ -1,51 +1,33 @@
-.screen {
-  position: fixed;
-  z-index: 61;
-  inset: 0;
-  width: 100vw;
-  height: 100dvh;
-  overflow: hidden;
-  background: #fdf5e1;
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&family=Special+Elite&display=swap");
+:global(.calendarRoot){
+  --desk:#fdf5e1; --ink:#1c1c1c; --num:#3d3d3d; --line:#1d1d1d; --heart:#a82c47;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}@media (prefers-color-scheme: dark){:global(.calendarRoot:not([data-theme="light"])){ --desk:#2a2418; } }:global(.calendarRoot[data-theme="dark"]){ --desk:#2a2418; }:global(.calendarRoot){ scroll-padding-top:env(safe-area-inset-top,0px); }:global(.calendarRoot *){ box-sizing:border-box; margin:0; padding:0; }:global(.calendarRoot){ min-height:100%; background:var(--desk); }:global(.calendarRoot){ display:grid; place-items:center; padding:2vh 2vw; padding-left:max(2vw,env(safe-area-inset-left,0px)); padding-right:max(2vw,env(safe-area-inset-right,0px)); min-height:100vh; min-height:100dvh; }:global(.calendarRoot .book){
+  display:grid; grid-template-columns:1fr 1fr; width:min(96vw, calc(96vh * 1.404)); position:relative;
+  box-shadow:0 2.2vmin 5vmin rgba(70,45,10,.32), 0 .4vmin 1vmin rgba(70,45,10,.25);
+}@supports (height:100dvh){:global(.calendarRoot .book){ width:min(96vw, calc(96dvh * 1.404)); } }:global(.calendarRoot .page){ position:relative; aspect-ratio:988/1407; container-type:size; overflow:hidden; }:global(.calendarRoot .left){ background:linear-gradient(90deg,#cdcdd2 0%,#dedee1 25%,#f0f0f1 58%,#fcfcfc 85%,#fff 100%); }:global(.calendarRoot .left::after){ content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(270deg,rgba(0,0,0,.10) 0,rgba(0,0,0,0) 3.5%); }:global(.calendarRoot .txt){
+  position:absolute; font-family:'Special Elite','Courier New',monospace; font-size:max(calc(1.8cqw * var(--f,1)),7.2px); line-height:1.31;
+  color:#141414; white-space:nowrap; letter-spacing:.01em; outline:none; -webkit-text-stroke:.25px #141414;
+}:global(.calendarRoot .txt.r){ text-align:right; }:global(.calendarRoot .blob), :global(.calendarRoot .cake){ position:absolute; display:block; height:auto; transition:transform .35s cubic-bezier(.3,1.5,.5,1); transform:rotate(var(--r,0deg)) scale(var(--f,1)); }:global(.calendarRoot .blob){ filter:drop-shadow(0 .25cqw .45cqw rgba(0,0,0,.28)); }:global(.calendarRoot .cake){ filter:none; }:global(.calendarRoot .blob:hover){ transform:rotate(calc(var(--r,0deg) + 3deg)) scale(calc(var(--f,1) * 1.06)); }:global(.calendarRoot .cake:hover){ transform:rotate(-2deg) scale(calc(var(--f,1) * 1.03)); }:global(.calendarRoot .right){ background:linear-gradient(90deg,#d6d6da 0%,#e6e6e8 30%,#f6f6f7 62%,#fff 88%); }:global(.calendarRoot .right::before){ content:""; position:absolute; inset:0; z-index:3; pointer-events:none; background:linear-gradient(90deg,rgba(0,0,0,.24) 0,rgba(0,0,0,.08) 1.2%,rgba(0,0,0,0) 7%); }:global(.calendarRoot .hero){ position:absolute; left:0; top:0; width:100%; height:47.1%; object-fit:cover; display:block; box-shadow:0 .3cqw .8cqw rgba(0,0,0,.25); z-index:1; }:global(.calendarRoot .cal){
+  position:absolute; left:0; right:0; top:47.4%; bottom:0; display:grid; z-index:2;
+  grid-template-columns:repeat(7,1fr); grid-template-rows:1.02fr repeat(5,1fr);
+  border-top:.35cqw solid var(--line);
+}:global(.calendarRoot .cal div){
+  display:grid; place-items:center; border-right:.45cqw solid var(--line); border-bottom:.45cqw solid var(--line);
+  font-family:'Poppins',system-ui,sans-serif; font-weight:300; font-size:3.2cqw; color:var(--num); line-height:1;
+}:global(.calendarRoot .cal div:nth-child(7n)){ border-right:0; }:global(.calendarRoot .cal .dow){ font-weight:700; font-size:2.85cqw; color:#0e0e0e; letter-spacing:-.02em; border-bottom-width:.6cqw; }:global(.calendarRoot .cal div:nth-last-child(-n+7)){ border-bottom:0; }:global(.calendarRoot .heart){ position:absolute; left:0; top:47.4%; width:100%; height:52.6%; z-index:4; pointer-events:none; overflow:visible; touch-action:none; }:global(.calendarRoot .heart path){ fill:none; stroke:var(--heart); stroke-width:6.5; stroke-linecap:round; stroke-linejoin:round; opacity:.92; stroke-dasharray:1; stroke-dashoffset:0; }:global(.calendarRoot #hg){ transition:transform .45s cubic-bezier(.3,1.35,.5,1); outline:none; transform-origin:0 0; }:global(.calendarRoot #hg.drag){ transition:none; }:global(.calendarRoot .heart path.hit){ stroke:transparent; stroke-width:46; stroke-dasharray:none; stroke-dashoffset:0; animation:none; opacity:1; fill:none; pointer-events:stroke; cursor:grab; }:global(.calendarRoot #hg.drag path.hit){ cursor:grabbing; }:global(.calendarRoot #hg:focus-visible path:first-child){ filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 7px var(--heart)); }:global(.calendarRoot .cal div[data-d]){ cursor:pointer; transition:background .2s; }:global(.calendarRoot .cal div[data-d]:hover){ background:rgba(168,44,71,.08); }@media (prefers-reduced-motion:reduce){:global(.calendarRoot #hg){ transition:none; } }:global(.calendarRoot .monthbar){ position:absolute; left:0; right:0; top:calc(47.1% - 9cqw); z-index:5; display:flex; justify-content:center; align-items:center; gap:1.4cqw; font-family:'Poppins',system-ui,sans-serif; }:global(.calendarRoot .monthbar .mlabel){ min-width:25cqw; text-align:center; padding:1.2cqw 2.6cqw; border-radius:99px; background:rgba(22,18,14,.58); color:#fff; font-weight:600; font-size:max(3.1cqw,13px); letter-spacing:.01em; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }:global(.calendarRoot .monthbar button){ all:unset; cursor:pointer; box-sizing:border-box; display:grid; place-items:center; min-width:max(5.4cqw,32px); height:max(5.4cqw,32px); border-radius:99px; background:rgba(22,18,14,.58); color:#fff; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:background .2s,transform .15s; }:global(.calendarRoot .monthbar button:hover){ background:rgba(168,44,71,.88); }:global(.calendarRoot .monthbar button:active){ transform:scale(.94); }:global(.calendarRoot .monthbar button:focus-visible){ outline:2px solid #fff; outline-offset:2px; }:global(.calendarRoot .monthbar button svg){ width:max(1.9cqw,9px); height:auto; }:global(.calendarRoot .monthbar .today){ padding:0 2.2cqw; font-size:max(2.5cqw,11px); font-weight:600; }:global(.calendarRoot .cal div){ transition:color .25s, background .25s; }:global(.calendarRoot .cal div.heart-date){ color:var(--heart); font-weight:600; background:rgba(168,44,71,.08); }@keyframes fadein{ from{ opacity:0; transform:translateY(5px); } to{ opacity:1; transform:none; } }:global(.calendarRoot [data-slot]){ cursor:pointer; }:global(.calendarRoot .hero.over){ filter:brightness(1.12); }:global(.calendarRoot .blob.over){ transform:rotate(var(--r,0deg)) scale(calc(var(--f,1) * 1.14)); }:global(.calendarRoot .photo-btn){ all:unset; cursor:pointer; box-sizing:border-box; position:absolute; top:2.2cqw; right:2.2cqw; z-index:5; display:flex; align-items:center; gap:.9cqw; padding:.9cqw 1.8cqw; border-radius:99px; background:rgba(22,18,14,.58); color:#fff; font:600 max(2.3cqw,11px) 'Poppins',system-ui,sans-serif; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); opacity:0; transition:opacity .2s,background .2s; }:global(.calendarRoot .photo-btn svg){ width:max(2.8cqw,13px); height:auto; }:global(.calendarRoot .right:hover .photo-btn), :global(.calendarRoot .photo-btn:focus-visible){ opacity:1; }:global(.calendarRoot .photo-btn:hover){ background:rgba(168,44,71,.88); }:global(.calendarRoot .photo-btn:focus-visible){ outline:2px solid #fff; outline-offset:2px; }@media (hover:none){:global(.calendarRoot .photo-btn){ opacity:.92; } }:global(.calendarRoot .lbox){ position:absolute; inset:0; container-type:inline-size; --f:1; }@media (min-width:701px) and (min-aspect-ratio:1001/1000){:global(.calendarRoot){ height:100%; }:global(.calendarRoot){ display:block; padding:0; overflow:hidden; min-height:100%; }:global(.calendarRoot .book){ width:100vw; height:100vh; box-shadow:none; }@supports (height:100dvh){:global(.calendarRoot .book){ height:100dvh; } }:global(.calendarRoot .page){ aspect-ratio:auto; height:100%; }:global(.calendarRoot .hero){ object-position:50% 22%; }
+}@media (prefers-reduced-motion:no-preference){:global(.calendarRoot .heart path){ animation:draw 2.2s .5s cubic-bezier(.5,.1,.3,1) both; }:global(.calendarRoot .heart path+path){ animation-delay:2.3s; animation-duration:.6s; }
+}@keyframes draw{ from{ stroke-dashoffset:1; } to{ stroke-dashoffset:0; } }@media (max-aspect-ratio:1/1), (max-width:700px){:global(.calendarRoot){ display:block; place-items:stretch; padding:0; }:global(.calendarRoot .book){ grid-template-columns:1fr; width:100%; box-shadow:none; }@supports (height:100dvh){:global(.calendarRoot .book){ width:100%; } }:global(.calendarRoot .right::before){ background:linear-gradient(180deg,rgba(0,0,0,.28) 0,rgba(0,0,0,.08) 1%,rgba(0,0,0,0) 4%); }:global(.calendarRoot .right){ background:linear-gradient(90deg,#e0e0e3 0%,#f3f3f4 50%,#fff 100%); }:global(.calendarRoot .cal div){ font-size:max(3.2cqw,12px); }:global(.calendarRoot .cal .dow){ font-size:max(2.6cqw,9.5px); }
 }
 
-/* Always match the full mobile viewport so the stacked pages aren't clipped. */
-.editorScreen {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-}
+/* This component owns scrolling because the application document itself is locked. */
+:global(.calendarRoot){position:fixed!important;z-index:61!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100dvh!important;max-height:none!important;display:block!important;overflow-x:hidden!important;overflow-y:auto!important;padding:0!important;place-items:initial!important;touch-action:pan-y!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--desk,#fdf5e1)!important;}
 
-.frame {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #fdf5e1;
-}
+.backButton { position:absolute; top:max(14px,env(safe-area-inset-top)); left:max(14px,env(safe-area-inset-left)); z-index:80; display:inline-flex; align-items:center; gap:8px; min-height:38px; padding:0 14px; border:1px solid rgba(0,0,0,.12); border-radius:999px; color:#fff; background:rgba(18,18,18,.9); box-shadow:0 5px 18px rgba(0,0,0,.14); font:600 11px/1 ui-sans-serif,system-ui,sans-serif; cursor:pointer; backdrop-filter:blur(12px); }
+.backButton:focus-visible{outline:2px solid #7f96c6;outline-offset:3px;}
 
-.backButton {
-  position: absolute;
-  top: max(14px, env(safe-area-inset-top));
-  left: max(14px, env(safe-area-inset-left));
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 14px;
-  border: 1px solid rgba(0, 0, 0, .12);
-  border-radius: 999px;
-  color: #fff;
-  background: rgba(18, 18, 18, .9);
-  box-shadow: 0 5px 18px rgba(0, 0, 0, .14);
-  font: 600 11px/1 ui-sans-serif, system-ui, sans-serif;
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-}
+:global(.calendarRoot .txt){white-space:pre-wrap;max-width:65%;overflow-wrap:anywhere;min-width:0;}
+:global(.calendarRoot .cal){animation:fadein .3s ease both;}
 
-.backButton:focus-visible {
-  outline: 2px solid #7f96c6;
-  outline-offset: 3px;
-}
+:global(html.paper-stish-calendar-active),:global(html.paper-stish-calendar-active body){touch-action:pan-y!important;}
