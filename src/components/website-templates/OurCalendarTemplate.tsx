@@ -75,8 +75,8 @@ export function OurCalendarTemplate({
 
         const initialEditMode = initialEditing.current;
         const htmlTag = initialEditMode
-          ? '<html lang="en">`
-          : '<html lang="en" class="paper-stish-readonly">`;
+          ? '<html lang="en">'
+          : '<html lang="en" class="paper-stish-readonly">';
         if (!source.includes('<html lang="en">') || !source.includes("</head>")) {
           throw new Error("The original calendar HTML has an unexpected document structure.");
         }
