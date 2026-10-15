@@ -201,6 +201,11 @@ export function OurCalendarTemplate({
   const photoRefs = useRef<Array<HTMLImageElement | null>>([]);
   const dragRef = useRef<DragState | null>(null);
 
+  useEffect(() => {
+    document.documentElement.classList.add("paper-stish-calendar-active");
+    return () => document.documentElement.classList.remove("paper-stish-calendar-active");
+  }, []);
+
   const today = useMemo(() => new Date(), []);
   const [view, setView] = useState<MonthView>(() => ({ year: today.getFullYear(), month: today.getMonth() }));
   const [selectedDay, setSelectedDay] = useState(today.getDate());
