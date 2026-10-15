@@ -7,7 +7,7 @@
   --sx: calc(env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px));
   --sy: calc(env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px));
   --W: calc(100vw - var(--sx));
-  --H: calc(100dvh - var(--sy));
+  --H: calc(100vh - var(--sy));
   --sw: min(var(--W), calc(var(--H) * .5633));
   --u: calc(var(--sw) / 614);
   position: fixed;
@@ -27,6 +27,9 @@
   background: var(--blue);
   color: var(--ink);
   color-scheme: light;
+}
+@supports (height: 100dvh) {
+  .stage { --H: calc(100dvh - var(--sy)); }
 }
 
 .stage * { box-sizing: border-box; }
