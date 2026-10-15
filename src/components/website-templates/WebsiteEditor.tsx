@@ -830,9 +830,11 @@ export function WebsiteEditor({
                     <span id="username-help" className={styles.fieldHelp}>Letters, numbers and hyphens.</span>
                   </label>
 
-                  <label className={styles.publishField} htmlFor="website-publish-link-name">
-                    <span className={styles.fieldMeta}>Link name <small>{websiteName.length}/48</small></span>
-                    <span className={styles.inputShell}>
+                  <div className={styles.publishField}>
+                    <label className={styles.fieldMeta} htmlFor="website-publish-link-name">
+                      Link name <small>{websiteName.length}/48</small>
+                    </label>
+                    <label className={styles.inputShell} htmlFor="website-publish-link-name">
                       <span className={styles.inputPrefix}>/</span>
                       <input
                         id="website-publish-link-name"
@@ -849,7 +851,7 @@ export function WebsiteEditor({
                         aria-describedby="link-name-help"
                         required
                       />
-                    </span>
+                    </label>
                     <span id="link-name-help" className={styles.fieldHelp}>Make it memorable and easy to share.</span>
                     <div className={styles.ideas}>
                       <span className={styles.ideaLabel}>Ideas</span>
@@ -857,7 +859,7 @@ export function WebsiteEditor({
                         <button key={idea} type="button" className={styles.ideaChip} onClick={() => setWebsiteName(idea)}>{idea}</button>
                       ))}
                     </div>
-                  </label>
+                  </div>
                 </div>
 
                 {error && <p className={styles.error} role="alert">{error}</p>}
