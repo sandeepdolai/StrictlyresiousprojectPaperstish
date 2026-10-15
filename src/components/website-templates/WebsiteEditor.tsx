@@ -494,7 +494,8 @@ export function WebsiteEditor({
   };
 
   const saveQrCode = () => {
-    if (!published || !qrMatrix) {
+    const publication = published;
+    if (!publication || !qrMatrix) {
       setCopyStatus("This link is too long to encode as a QR code.");
       return;
     }
@@ -525,7 +526,7 @@ export function WebsiteEditor({
       const downloadUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = downloadUrl;
-      anchor.download = `paperstish-qr-${published.username}-${published.viewerName}.png`;
+      anchor.download = `paperstish-qr-${publication.username}-${publication.viewerName}.png`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
