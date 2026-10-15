@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import {
   publishResultToRecord,
@@ -20,6 +20,7 @@ import {
 } from "./ForeverAndEverTemplate";
 import { OUR_CALENDAR_DEFAULT_NOTES, OurCalendarTemplate } from "./OurCalendarTemplate";
 import { LoveOfMyLifeTemplate } from "./LoveOfMyLifeTemplate";
+import { qrCodeMatrix, qrCodeSvgPath } from "@/lib/qrCode";
 import styles from "./WebsiteEditor.module.css";
 
 export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "birthday-today" | "photo-album" | "love-heart" | "forever-and-ever" | "our-calendar";
@@ -116,6 +117,10 @@ function defaultValues(templateSlug: WebsiteEditorTemplateSlug): TemplatePublica
   return { ...TEXT_DEFAULTS[templateSlug] };
 }
 
+function normalizeLinkInput(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-{2,}/g, "-").replace(/^-+/, "").slice(0, 48);
+}
+
 async function optimizePhoto(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) {
     throw new Error("Choose an image such as JPG, PNG, or WEBP.");
@@ -182,6 +187,8 @@ export function WebsiteEditor({
   const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false);
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [editingPublishDetails, setEditingPublishDetails] = useState(false);
+  const [qrExpanded, setQrExpanded] = useState(true);
+  const [copyStatus, setCopyStatus] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const publishedLinkInput = useRef<HTMLInputElement>(null);
   const targetPhotoIndex = useRef(0);
@@ -191,6 +198,57 @@ export function WebsiteEditor({
   const isOurCalendar = templateSlug === "our-calendar";
   const title = TEMPLATE_TITLES[templateSlug];
   const showPublishResult = Boolean(published && !hasUnpublishedChanges && !editingPublishDetails);
+  const previewUsername = slugPart(username, "your-name");
+  const previewWebsiteName = slugPart(websiteName, "your-link");
+  const linkNameIdeas = templateSlug === "birthday-today"
+    ? ["birthday", "celebrate-you", "today-is-yours"]
+    : templateSlug === "photo-album"
+      ? ["our-memories", "little-moments", "photo-album"]
+      : ["our-story", "for-you", "a-little-surprise"];
+  const qrMatrix = useMemo(() => published?.url ? qrCodeMatrix(published!.url) : null, [published?.url]);
+
+  useEffect(() => {
+    if (!publishDialogOpen) return;
+
+    const dialog = document.getElementById("website-publish-dialog");
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusInitial = () => {
+      const target = showPublishResult ? publishedLinkInput.current : document.getElementById("website-publish-username");
+      target?.focus({ preventScroll: true });
+    };
+    focusInitial();
+
+    const handleDialogKeys = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (!publishing) setPublishDialogOpen(false);
+        return;
+      }
+      if (event.key !== "Tab" || !dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), [tabindex="0"]',
+      )).filter((element) => element.offsetParent !== null);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleDialogKeys);
+    return () => {
+      document.removeEventListener("keydown", handleDialogKeys);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus?.({ preventScroll: true });
+    };
+  }, [publishDialogOpen, showPublishResult, publishing]);
 
   useEffect(() => {
     const defaults = defaultValues(templateSlug);
@@ -394,6 +452,8 @@ export function WebsiteEditor({
       });
       const record = publishResultToRecord(result);
       setPublished(record);
+      setQrExpanded(true);
+      setCopyStatus("");
       setHasUnpublishedChanges(false);
       setEditingPublishDetails(false);
       try {
@@ -411,11 +471,68 @@ export function WebsiteEditor({
   const copyLink = async () => {
     if (!published) return;
     try {
-      await navigator.clipboard.writeText(published.url);
+      await navigator.clipboard.writeText(published!.url);
+      setCopyStatus("Link copied.");
     } catch {
       publishedLinkInput.current?.focus();
       publishedLinkInput.current?.select();
+      setCopyStatus("Select the link and copy it.");
     }
+  };
+
+  const shareLink = async () => {
+    if (!published) return;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title, url: published!.url });
+        return;
+      } catch (shareError) {
+        if (shareError instanceof Error && shareError.name === "AbortError") return;
+      }
+    }
+    await copyLink();
+  };
+
+  const saveQrCode = () => {
+    const publication = published;
+    if (!publication || !qrMatrix) {
+      setCopyStatus("This link is too long to encode as a QR code.");
+      return;
+    }
+    const quietZone = 4;
+    const scale = 12;
+    const dimension = (qrMatrix.length + quietZone * 2) * scale;
+    const canvas = document.createElement("canvas");
+    canvas.width = dimension;
+    canvas.height = dimension;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setCopyStatus("Could not prepare the QR image in this browser.");
+      return;
+    }
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, dimension, dimension);
+    context.fillStyle = "#111318";
+    for (let y = 0; y < qrMatrix.length; y += 1) {
+      for (let x = 0; x < qrMatrix.length; x += 1) {
+        if (qrMatrix[y][x]) context.fillRect((x + quietZone) * scale, (y + quietZone) * scale, scale, scale);
+      }
+    }
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        setCopyStatus("Could not create the QR image. Please try again.");
+        return;
+      }
+      const downloadUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = downloadUrl;
+      anchor.download = `paperstish-qr-${publication.username}-${publication.viewerName}.png`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1500);
+      setCopyStatus("QR code saved as PNG.");
+    }, "image/png");
   };
 
   return (
@@ -544,13 +661,11 @@ export function WebsiteEditor({
           className={styles.dialogBackdrop}
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setPublishDialogOpen(false);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") setPublishDialogOpen(false);
+            if (event.target === event.currentTarget && !publishing) setPublishDialogOpen(false);
           }}
         >
           <form
+            id="website-publish-dialog"
             className={styles.dialog}
             role="dialog"
             aria-modal="true"
@@ -568,69 +683,207 @@ export function WebsiteEditor({
               type="button"
               className={styles.dialogClose}
               aria-label="Close publish dialog"
+              disabled={publishing}
               onClick={() => setPublishDialogOpen(false)}
             >
-              ×
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
             </button>
 
             {showPublishResult ? (
-              <>
-                <p className={styles.dialogEyebrow}>YOUR WEBSITE IS LIVE</p>
-                <h2 id="website-publish-title" className={styles.dialogTitle}>Ready to share.</h2>
-                <p className={styles.dialogCopy}>Your website is published. Send this link to anyone you want to share it with.</p>
-                <input
-                  ref={publishedLinkInput}
-                  className={styles.publishedLink}
-                  value={published?.url ?? ""}
-                  readOnly
-                  onFocus={(event) => event.currentTarget.select()}
-                  aria-label="Published website link"
-                />
-                <div className={styles.dialogActions}>
-                  <button type="button" className={styles.secondaryAction} onClick={() => void copyLink()}>Copy link</button>
-                  <a className={styles.secondaryAction} href={published?.url} target="_blank" rel="noreferrer">Open website</a>
+              <section className={styles.successView} aria-labelledby="website-publish-title">
+                <div className={styles.successMark} aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m5 12.5 4.5 4.5L19 7.5" />
+                  </svg>
                 </div>
+                <p className={styles.dialogEyebrow}><span className={styles.eyebrowDot} /> YOUR WEBSITE IS LIVE</p>
+                <h2 id="website-publish-title" className={styles.dialogTitle}>Ready to share.</h2>
+                <p className={styles.dialogCopy}>Your website is published. Share the link or let someone scan its QR code to open it.</p>
+
+                <div className={`${styles.urlPreview} ${styles.urlPreviewLive}`}>
+                  <svg className={styles.urlLock} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="9" rx="2.5" />
+                    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                  </svg>
+                  <input
+                    ref={publishedLinkInput}
+                    className={styles.publishedLink}
+                    value={published!.url}
+                    readOnly
+                    onFocus={(event) => event.currentTarget.select()}
+                    aria-label="Published website link"
+                  />
+                  <button type="button" className={styles.iconAction} onClick={() => void copyLink()} aria-label="Copy published website link" title="Copy link">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="11" height="11" rx="2.5" /><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className={styles.dialogActions}>
+                  <button type="button" className={styles.secondaryAction} onClick={() => void copyLink()}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="11" height="11" rx="2.5" /><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15" />
+                    </svg>
+                    Copy link
+                  </button>
+                  <button type="button" className={styles.secondaryAction} onClick={() => void shareLink()}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M12 15V4M8 8l4-4 4 4M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
+                    </svg>
+                    Share
+                  </button>
+                </div>
+                <a className={styles.openLink} href={published!.url} target="_blank" rel="noreferrer">Open published website <span aria-hidden="true">↗</span></a>
+
+                <button
+                  type="button"
+                  className={styles.qrToggle}
+                  aria-expanded={qrExpanded}
+                  aria-controls="published-qr-panel"
+                  onClick={() => setQrExpanded((expanded) => !expanded)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M14 14h3v3M21 14v.01M14 21h3M21 17v4h-3" />
+                  </svg>
+                  {qrExpanded ? "Hide QR code" : "Show QR code"}
+                  <span className={styles.qrToggleChevron} aria-hidden="true">{qrExpanded ? "−" : "+"}</span>
+                </button>
+
+                {qrExpanded && (
+                  <div id="published-qr-panel" className={styles.qrPanel}>
+                    <div className={styles.qrArtwork}>
+                      {qrMatrix ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox={`0 0 ${qrMatrix.length + 8} ${qrMatrix.length + 8}`}
+                          role="img"
+                          aria-label={`QR code for ${published!.url}`}
+                          shapeRendering="crispEdges"
+                        >
+                          <rect width="100%" height="100%" fill="#ffffff" />
+                          <path d={qrCodeSvgPath(qrMatrix)} fill="#111318" />
+                        </svg>
+                      ) : (
+                        <p className={styles.qrUnavailable}>QR code unavailable for this link.</p>
+                      )}
+                    </div>
+                    <div className={styles.qrDetails}>
+                      <strong>Scan to open your website</strong>
+                      <span>{published!.url}</span>
+                      <button type="button" className={styles.qrSaveButton} onClick={saveQrCode} disabled={!qrMatrix}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3" />
+                        </svg>
+                        Save as PNG
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {copyStatus && <p className={styles.statusLine} role="status">{copyStatus}</p>}
                 <button type="button" className={styles.primaryAction} onClick={() => setPublishDialogOpen(false)}>Done</button>
-                <button type="button" className={styles.textAction} onClick={() => setEditingPublishDetails(true)}>Edit link details</button>
-              </>
+                <button type="button" className={styles.textAction} onClick={() => { setCopyStatus(""); setEditingPublishDetails(true); }}>Edit link details</button>
+              </section>
             ) : (
-              <>
-                <p className={styles.dialogEyebrow}>ONE LITTLE LINK, ALL YOURS</p>
+              <section className={styles.publishFormView} aria-labelledby="website-publish-title">
+                <p className={styles.dialogEyebrow}><span className={styles.eyebrowDot} /> ONE LITTLE LINK, ALL YOURS</p>
                 <h2 id="website-publish-title" className={styles.dialogTitle}>Make it shareable.</h2>
-                <p className={styles.dialogCopy}>Choose the address for your website. The design and everything you just edited stay exactly as they are.</p>
-                <label className={styles.field}>
-                  <span>Your username</span>
-                  <input
-                    className={styles.textInput}
-                    value={username}
-                    maxLength={60}
-                    onChange={(event) => setUsername(event.target.value)}
-                    placeholder="your-name"
-                    autoComplete="username"
-                    required
-                  />
-                </label>
-                <label className={styles.field}>
-                  <span>Link name</span>
-                  <input
-                    className={styles.textInput}
-                    value={websiteName}
-                    maxLength={60}
-                    onChange={(event) => setWebsiteName(event.target.value)}
-                    placeholder="our-story"
-                    required
-                  />
-                </label>
+                <p className={styles.dialogCopy}>Choose an address for your website. Your design and edits will stay exactly as you made them.</p>
+
+                <div className={styles.urlPreview} aria-live="polite">
+                  <svg className={styles.urlLock} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="9" rx="2.5" />
+                    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                  </svg>
+                  <div className={styles.urlPreviewBody}>
+                    <p className={styles.urlPreviewText}>
+                      <span>paperstish.online/</span><strong>{previewUsername}</strong><span>/</span><strong>{previewWebsiteName}</strong><span className={styles.urlPreviewTail}>/…</span>
+                    </p>
+                    <p className={styles.urlPreviewHint}>Your final share link is created when you publish.</p>
+                  </div>
+                </div>
+
+                <div className={styles.publishFields}>
+                  <label className={styles.publishField} htmlFor="website-publish-username">
+                    <span className={styles.fieldMeta}>Your username <small>{username.length}/48</small></span>
+                    <span className={styles.inputShell}>
+                      <span className={styles.inputPrefix}>@</span>
+                      <input
+                        id="website-publish-username"
+                        className={styles.textInput}
+                        value={username}
+                        maxLength={48}
+                        autoComplete="username"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        onChange={(event) => setUsername(normalizeLinkInput(event.target.value))}
+                        onBlur={() => setUsername(slugPart(username, ""))}
+                        placeholder="yourname"
+                        aria-describedby="username-help"
+                        required
+                      />
+                    </span>
+                    <span id="username-help" className={styles.fieldHelp}>Letters, numbers and hyphens.</span>
+                  </label>
+
+                  <div className={styles.publishField}>
+                    <label className={styles.fieldMeta} htmlFor="website-publish-link-name">
+                      Link name <small>{websiteName.length}/48</small>
+                    </label>
+                    <label className={styles.inputShell} htmlFor="website-publish-link-name">
+                      <span className={styles.inputPrefix}>/</span>
+                      <input
+                        id="website-publish-link-name"
+                        className={styles.textInput}
+                        value={websiteName}
+                        maxLength={48}
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        onChange={(event) => setWebsiteName(normalizeLinkInput(event.target.value))}
+                        onBlur={() => setWebsiteName(slugPart(websiteName, ""))}
+                        placeholder="our-story"
+                        aria-describedby="link-name-help"
+                        required
+                      />
+                    </label>
+                    <span id="link-name-help" className={styles.fieldHelp}>Make it memorable and easy to share.</span>
+                    <div className={styles.ideas}>
+                      <span className={styles.ideaLabel}>Ideas</span>
+                      {linkNameIdeas.map((idea) => (
+                        <button key={idea} type="button" className={styles.ideaChip} onClick={() => setWebsiteName(idea)}>{idea}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {error && <p className={styles.error} role="alert">{error}</p>}
                 <button
                   type="submit"
                   className={styles.primaryAction}
                   disabled={publishing || photoLoading || status === "loading"}
                 >
-                  {publishing ? "Publishing…" : status === "authenticated" ? (published ? "Update website" : "Publish website") : "Sign in and publish"}
+                  {publishing ? (
+                    <>
+                      <span className={styles.buttonSpinner} aria-hidden="true" />
+                      Publishing…
+                    </>
+                  ) : (
+                    <>
+                      {status === "authenticated" ? (published ? "Update website" : "Publish website") : "Sign in and publish"}
+                      <svg className={styles.buttonArrow} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                      </svg>
+                    </>
+                  )}
                 </button>
-                <p className={styles.dialogFootnote}>Your draft saves on this device while you edit.</p>
-              </>
+                <p className={styles.dialogFootnote}><span className={styles.footnoteDot} /> Your draft stays on this device while you edit.</p>
+              </section>
             )}
           </form>
         </div>

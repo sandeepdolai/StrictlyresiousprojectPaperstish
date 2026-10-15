@@ -252,3 +252,535 @@
   }
   .dialog { gap: 13px; padding-top: 28px; }
 }
+
+
+/* Publishing card — applied to the real publish flow, not a standalone demo. */
+.dialogBackdrop {
+  z-index: 100;
+  place-items: center;
+  padding: 20px;
+  background: rgba(8, 10, 16, .66);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.dialog {
+  display: block;
+  width: min(480px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 30px 28px 24px;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 30px;
+  color: #f4f5f7;
+  background: radial-gradient(120% 70% at 0% 0%, rgba(140, 173, 214, .16), transparent 55%), #131418;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .06);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  outline: none;
+  animation: publishCardRise .42s cubic-bezier(.2, .9, .25, 1) both;
+}
+
+@keyframes publishCardRise {
+  from { opacity: 0; transform: translateY(24px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.dialogClose {
+  top: 18px;
+  right: 18px;
+  width: 40px;
+  height: 40px;
+  border-color: #2a2d35;
+  color: #9a9fab;
+  background: transparent;
+  font-size: initial;
+}
+.dialogClose:hover:not(:disabled) { color: #f4f5f7; background: #1a1c22; }
+.dialogClose:disabled { opacity: .45; cursor: not-allowed; }
+.dialogClose svg { width: 16px; height: 16px; }
+
+.publishFormView,
+.successView {
+  display: grid;
+  gap: 14px;
+}
+
+.dialogEyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 18px;
+  padding: 0 44px;
+  color: #8cadd6;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: .16em;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.eyebrowDot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8cadd6;
+  box-shadow: 0 0 0 4px rgba(140, 173, 214, .18);
+}
+.successView .eyebrowDot {
+  background: #5fd39a;
+  box-shadow: 0 0 0 4px rgba(95, 211, 154, .14);
+}
+
+.dialogTitle {
+  margin: 0;
+  color: #f4f5f7;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: clamp(30px, 7.4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.dialogCopy {
+  max-width: 36ch;
+  margin: -2px auto 2px;
+  color: #9a9fab;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.urlPreview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 60px;
+  margin-top: 4px;
+  padding: 13px 14px 13px 16px;
+  border: 1px solid #2a2d35;
+  border-radius: 16px;
+  background: #0c0d10;
+}
+.urlPreviewLive { border-color: rgba(95, 211, 154, .35); }
+.urlLock {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: #6c717d;
+}
+.urlPreviewBody { flex: 1; min-width: 0; }
+.urlPreviewText {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #6c717d;
+  font-size: 14px;
+  letter-spacing: -.01em;
+  line-height: 1.45;
+}
+.urlPreviewText strong { color: #f4f5f7; font-weight: 600; }
+.urlPreviewTail { color: #555a66; }
+.urlPreviewHint {
+  margin-top: 4px;
+  color: #6c717d;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.urlPreviewLive .publishedLink {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  min-height: 32px;
+  margin: 0;
+  padding: 5px 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  color: #f4f5f7;
+  background: transparent;
+  box-shadow: none;
+  font: 500 13px/1.45 Inter, ui-sans-serif, system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+.urlPreviewLive .publishedLink:focus { outline: none; }
+
+.publishFields {
+  display: grid;
+  gap: 17px;
+  margin-top: 2px;
+}
+.publishField {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+  color: #cfd2da;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.fieldMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 1px;
+}
+.fieldMeta small {
+  color: #6c717d;
+  font-size: 12px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.inputShell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border: 1.5px solid #2a2d35;
+  border-radius: 16px;
+  background: #1a1c22;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.inputShell:hover { border-color: #3a3e48; }
+.inputShell:focus-within {
+  border-color: #8cadd6;
+  background: #1d2027;
+  box-shadow: 0 0 0 4px rgba(140, 173, 214, .16);
+}
+.inputPrefix {
+  flex: none;
+  padding-left: 18px;
+  color: #6c717d;
+  font-size: 16px;
+  user-select: none;
+}
+.textInput {
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  padding: 15px 14px 15px 7px;
+  border: 0;
+  border-radius: inherit;
+  outline: none;
+  color: #f4f5f7;
+  background: transparent;
+  box-shadow: none;
+  font: 500 16px/1.35 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -.01em;
+}
+.textInput::placeholder { color: #565b67; }
+.textInput:focus { outline: none; border: 0; box-shadow: none; }
+.fieldHelp {
+  color: #6c717d;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.ideas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.ideaLabel {
+  margin-right: 2px;
+  color: #6c717d;
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.ideaChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 29px;
+  padding: 6px 12px;
+  border: 1px solid #2a2d35;
+  border-radius: 999px;
+  color: #c3c7d0;
+  background: transparent;
+  font: 400 12.5px/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.ideaChip:hover { border-color: #3a3e48; color: #f4f5f7; background: #1a1c22; }
+.ideaChip:focus-visible,
+.iconAction:focus-visible,
+.qrToggle:focus-visible,
+.qrSaveButton:focus-visible,
+.openLink:focus-visible,
+.dialogClose:focus-visible,
+.textAction:focus-visible,
+.primaryAction:focus-visible,
+.secondaryAction:focus-visible {
+  outline: 2px solid #8cadd6;
+  outline-offset: 3px;
+}
+
+.primaryAction,
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 13px 18px;
+  border-radius: 999px;
+  font: 600 14px/1.25 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -.01em;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.primaryAction {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 3px;
+  border: 1px solid rgba(255, 255, 255, .08);
+  color: #0e0f12;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, .08);
+  transition: transform .15s, box-shadow .2s, background .2s, opacity .2s;
+}
+.primaryAction:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #f0f1f3;
+  box-shadow: 0 12px 30px rgba(255, 255, 255, .14);
+}
+.primaryAction:active:not(:disabled) { transform: translateY(1px) scale(.99); }
+.primaryAction:disabled { cursor: not-allowed; color: #777c88; background: #2a2d35; box-shadow: none; opacity: 1; }
+.buttonArrow,
+.secondaryAction svg,
+.qrToggle svg,
+.qrSaveButton svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.buttonSpinner {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  border: 2px solid rgba(14, 15, 18, .22);
+  border-top-color: #0e0f12;
+  border-radius: 50%;
+  animation: publishSpin .8s linear infinite;
+}
+@keyframes publishSpin { to { transform: rotate(360deg); } }
+
+.dialogFootnote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: -2px;
+  color: #6c717d;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+.footnoteDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5fd39a;
+}
+
+.error {
+  margin: -1px 0 0;
+  color: #ff7d8d;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.successView { text-align: center; }
+.successMark {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  margin: 6px auto 3px;
+  border: 1.5px solid rgba(95, 211, 154, .5);
+  border-radius: 50%;
+  color: #5fd39a;
+  background: rgba(95, 211, 154, .14);
+  animation: publishSuccessPop .45s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+.successMark svg { width: 34px; height: 34px; }
+@keyframes publishSuccessPop {
+  from { opacity: 0; transform: scale(.55); }
+  to { opacity: 1; transform: scale(1); }
+}
+.successView .dialogTitle { font-size: clamp(28px, 7vw, 34px); }
+.successView .dialogCopy { margin-top: -4px; }
+.iconAction {
+  flex: none;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  color: #9a9fab;
+  background: transparent;
+  cursor: pointer;
+  transition: color .2s, background .2s;
+}
+.iconAction:hover { color: #f4f5f7; background: #1a1c22; }
+.iconAction svg { width: 17px; height: 17px; }
+.dialogActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.secondaryAction {
+  width: 100%;
+  border: 1.5px solid #3a3e48;
+  color: #f4f5f7;
+  background: transparent;
+}
+.secondaryAction:hover { background: #1a1c22; }
+.openLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  justify-self: center;
+  margin-top: -8px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  color: #9a9fab;
+  font-size: 13px;
+  text-decoration: none;
+}
+.openLink:hover { color: #f4f5f7; }
+
+.qrToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 1px;
+  padding: 7px 2px;
+  border: 0;
+  border-bottom: 1px solid #2a2d35;
+  color: #cfd2da;
+  background: transparent;
+  font: 500 13px/1.4 Inter, ui-sans-serif, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+.qrToggle:hover { color: #f4f5f7; }
+.qrToggleChevron { margin-left: auto; color: #6c717d; font-size: 20px; }
+.qrPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #2a2d35;
+  border-radius: 18px;
+  background: #0c0d10;
+  animation: publishFade .22s ease both;
+}
+@keyframes publishFade { from { opacity: 0; } to { opacity: 1; } }
+.qrArtwork {
+  display: grid;
+  width: min(190px, 100%);
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+}
+.qrArtwork svg { display: block; width: 100%; height: 100%; }
+.qrUnavailable { padding: 15px; color: #444; font-size: 12px; }
+.qrDetails {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-align: center;
+}
+.qrDetails strong { color: #f4f5f7; font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; }
+.qrDetails > span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: #9a9fab;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.qrSaveButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid #3a3e48;
+  border-radius: 999px;
+  color: #cfd2da;
+  background: transparent;
+  font: 500 12px/1.3 Inter, ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+}
+.qrSaveButton:hover:not(:disabled) { color: #fff; background: #1a1c22; }
+.qrSaveButton:disabled { opacity: .45; cursor: not-allowed; }
+.statusLine {
+  margin-top: -4px;
+  color: #5fd39a;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.textAction {
+  justify-self: center;
+  margin-top: -7px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #9a9fab;
+  background: transparent;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.textAction:hover { color: #f4f5f7; }
+
+@media (max-width: 600px) {
+  .dialogBackdrop { place-items: end center; padding: 0; }
+  .dialog {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+    padding: 26px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+    border-radius: 30px 30px 0 0;
+  }
+  .dialogClose { top: 16px; right: 16px; }
+  .dialogEyebrow { font-size: 10.5px; letter-spacing: .13em; }
+  .dialogCopy { font-size: 14px; }
+  .urlPreview { margin-top: 0; }
+  .publishFields { gap: 15px; }
+  .qrPanel { padding: 14px; }
+}
+
+@media (max-width: 380px) {
+  .dialog { padding-left: 18px; padding-right: 18px; }
+  .dialogActions { gap: 8px; }
+  .secondaryAction { padding-left: 10px; padding-right: 10px; font-size: 12.5px; }
+}
+
+@media (max-height: 640px) and (min-width: 601px) {
+  .dialog { padding-top: 24px; padding-bottom: 20px; }
+  .publishFormView, .successView { gap: 10px; }
+  .dialogCopy { font-size: 13px; }
+  .urlPreview { margin-top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog, .successMark, .qrPanel, .buttonSpinner { animation: none; }
+  .primaryAction, .ideaChip, .iconAction { transition: none; }
+}
