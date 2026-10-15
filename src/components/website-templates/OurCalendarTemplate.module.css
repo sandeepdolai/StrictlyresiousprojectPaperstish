@@ -8,6 +8,13 @@
   background: #fdf5e1;
 }
 
+/* In the editor, fill its existing full-screen layer instead of nesting a fixed viewport. */
+.editorScreen {
+  position: absolute;
+  width: auto;
+  height: auto;
+}
+
 .frame {
   display: block;
   width: 100%;

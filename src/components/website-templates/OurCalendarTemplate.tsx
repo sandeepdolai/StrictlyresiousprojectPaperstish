@@ -137,8 +137,10 @@ export function OurCalendarTemplate({
     iframeRef.current?.contentWindow?.postMessage({ type: "paper-stish:set-editing", editing }, "*");
   }, [editing]);
 
+  const screenClassName = editing ? `${styles.screen} ${styles.editorScreen}` : styles.screen;
+
   return (
-    <main className={styles.screen}>
+    <main className={screenClassName}>
       <iframe
         ref={iframeRef}
         title="Our Calendar"
