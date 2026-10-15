@@ -29,3 +29,5 @@
 
 :global(.calendarRoot .txt){white-space:pre-wrap;max-width:65%;overflow-wrap:anywhere;min-width:0;}
 :global(.calendarRoot .cal){animation:fadein .3s ease both;}
+
+:global(html.paper-stish-calendar-active),:global(html.paper-stish-calendar-active body){touch-action:pan-y!important;}
