@@ -22,6 +22,7 @@ import { validateSmartEditDocument } from "@/components/smartedit/publish";
 import { slugPart } from "@/lib/slug";
 import { durableTemplateValues } from "@/lib/cloudinaryUpload";
 import { isBundledPublicImagePath } from "@/lib/templateImageValue";
+import { isValidCalendarHeartDate, type CalendarHeartDate } from "@/lib/calendarHeartValue";
 
 export { slugPart };
 
@@ -68,6 +69,8 @@ export interface TemplatePublicationValues {
   letterParagraphs?: string[];
   /** Four editable scrapbook notes used by the Our Calendar template. */
   calendarNotes?: string[];
+  /** The date marked by the movable heart on Our Calendar. */
+  calendarHeart?: CalendarHeartDate;
 }
 
 /** What the public viewer receives for a published website. */
@@ -172,6 +175,12 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
     }
   }
 
+  let calendarHeart: CalendarHeartDate | undefined;
+  if (v.calendarHeart !== undefined) {
+    if (!isValidCalendarHeartDate(v.calendarHeart)) return null;
+    calendarHeart = { ...v.calendarHeart };
+  }
+
   const values: TemplatePublicationValues = {
     heading: boundedString(v.heading, 200),
     loveMessage: boundedString(v.loveMessage, 100),
@@ -188,6 +197,7 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
     captions,
     letterParagraphs,
     calendarNotes,
+    calendarHeart,
   };
   return values;
 }
