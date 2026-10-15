@@ -118,7 +118,7 @@ function defaultValues(templateSlug: WebsiteEditorTemplateSlug): TemplatePublica
 }
 
 function normalizeLinkInput(value: string): string {
-  return value.toLowerCase().replace(/\\s+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-{2,}/g, "-").replace(/^-+/, "").slice(0, 48);
+  return value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").replace(/-{2,}/g, "-").replace(/^-+/, "").slice(0, 48);
 }
 
 async function optimizePhoto(file: File): Promise<string> {
