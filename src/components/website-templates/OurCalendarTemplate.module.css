@@ -77,7 +77,14 @@
   box-shadow: 5px 5px 0 #a82c47;
   font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   line-height: 1.4;
+  animation: tipPanelPop .28s cubic-bezier(.3,1.5,.5,1) both;
+  transform-origin: bottom left;
 }
+@keyframes tipPanelPop {
+  from { opacity: 0; transform: translateY(8px) scale(.94); }
+  to { opacity: 1; transform: none; }
+}
+
 .tipHeader {
   display: flex;
   align-items: center;
@@ -137,4 +144,5 @@
 .tipGotIt:hover { background: #8e2239; }
 @media (prefers-reduced-motion: reduce) {
   .tipButton { transition: none; }
+  .tipPanel { animation: none; }
 }

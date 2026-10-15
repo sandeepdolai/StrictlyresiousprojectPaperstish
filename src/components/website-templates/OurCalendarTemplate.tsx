@@ -202,6 +202,7 @@ export function OurCalendarTemplate({
   const heartSvgRef = useRef<SVGSVGElement>(null);
   const photoRefs = useRef<Array<HTMLImageElement | null>>([]);
   const dragRef = useRef<DragState | null>(null);
+  const tipsInteractedRef = useRef(false);
 
   useEffect(() => {
     document.documentElement.classList.add("paper-stish-calendar-active");
@@ -216,10 +217,55 @@ export function OurCalendarTemplate({
   const [dragging, setDragging] = useState(false);
   const [tipsOpen, setTipsOpen] = useState(false);
 
+  const markTipsSeen = () => {
+    try {
+      window.localStorage.setItem("tipSeen", "1");
+    } catch {
+      // Tips still work when browser storage is unavailable.
+    }
+  };
+
+  const closeTips = () => {
+    tipsInteractedRef.current = true;
+    setTipsOpen(false);
+    markTipsSeen();
+  };
+
+  const toggleTips = () => {
+    tipsInteractedRef.current = true;
+    setTipsOpen((open) => {
+      if (open) markTipsSeen();
+      return !open;
+    });
+  };
+
+  useEffect(() => {
+    if (!editing) return;
+    let seen = false;
+    try {
+      seen = window.localStorage.getItem("tipSeen") === "1";
+    } catch {
+      // Treat unavailable storage as a first visit.
+    }
+    if (seen) return;
+    const timer = window.setTimeout(() => {
+      if (!tipsInteractedRef.current) setTipsOpen(true);
+    }, 2600);
+    return () => window.clearTimeout(timer);
+  }, [editing]);
+
   useEffect(() => {
     if (!tipsOpen) return;
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") setTipsOpen(false);
+      if (event.key === "Escape") {
+        tipsInteractedRef.current = true;
+        setTipsOpen(false);
+        try {
+          window.localStorage.setItem("tipSeen", "1");
+        } catch {
+          // The panel can close even when storage is unavailable.
+        }
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -580,7 +626,7 @@ export function OurCalendarTemplate({
             <aside id="calendar-tip-panel" className={styles.tipPanel} role="dialog" aria-modal="false" aria-labelledby="calendar-tip-title">
               <div className={styles.tipHeader}>
                 <h2 id="calendar-tip-title">What you can do</h2>
-                <button type="button" className={styles.tipClose} onClick={() => setTipsOpen(false)} aria-label="Close tips">×</button>
+                <button type="button" className={styles.tipClose} onClick={closeTips} aria-label="Close tips">×</button>
               </div>
               <ul className={styles.tipList}>
                 <li><span className={styles.tipIcon} aria-hidden="true">♥</span><span><strong>Move the heart</strong>Drag it, tap any date, or use the arrow keys.</span></li>
@@ -589,8 +635,8 @@ export function OurCalendarTemplate({
                 <li><span className={styles.tipIcon} aria-hidden="true">✏️</span><span><strong>Write your own words</strong>Tap any “add a subheading” text and type.</span></li>
               </ul>
               <div className={styles.tipActions}>
-                <button type="button" className={styles.tipReset} onClick={() => { onPhotosReset?.(); setTipsOpen(false); }}>Reset photos</button>
-                <button type="button" className={styles.tipGotIt} onClick={() => setTipsOpen(false)}>Got it</button>
+                <button type="button" className={styles.tipReset} onClick={() => { onPhotosReset?.(); closeTips(); }}>Reset photos</button>
+                <button type="button" className={styles.tipGotIt} onClick={closeTips}>Got it</button>
               </div>
             </aside>
           )}
@@ -599,7 +645,7 @@ export function OurCalendarTemplate({
             className={styles.tipButton}
             aria-expanded={tipsOpen}
             aria-controls="calendar-tip-panel"
-            onClick={() => setTipsOpen((open) => !open)}
+            onClick={toggleTips}
           >
             <span aria-hidden="true">💡</span>
             Tips
