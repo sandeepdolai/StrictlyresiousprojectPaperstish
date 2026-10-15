@@ -576,7 +576,7 @@ export function OurCalendarTemplate({
       {editing && (
         <>
           {tipsOpen && (
-            <aside className={styles.tipPanel} role="dialog" aria-modal="false" aria-labelledby="calendar-tip-title">
+            <aside id="calendar-tip-panel" className={styles.tipPanel} role="dialog" aria-modal="false" aria-labelledby="calendar-tip-title">
               <div className={styles.tipHeader}>
                 <h2 id="calendar-tip-title">What you can do</h2>
                 <button type="button" className={styles.tipClose} onClick={() => setTipsOpen(false)} aria-label="Close tips">×</button>
@@ -597,7 +597,7 @@ export function OurCalendarTemplate({
             type="button"
             className={styles.tipButton}
             aria-expanded={tipsOpen}
-            aria-controls="calendar-tip-title"
+            aria-controls="calendar-tip-panel"
             onClick={() => setTipsOpen((open) => !open)}
           >
             <span aria-hidden="true">💡</span>
