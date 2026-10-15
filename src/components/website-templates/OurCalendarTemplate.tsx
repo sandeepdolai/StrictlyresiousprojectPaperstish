@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, KeyboardEvent, PointerEvent } from "react";
+import type { CSSProperties, DragEvent, KeyboardEvent, PointerEvent } from "react";
 import type { TemplatePublicationValues } from "@/lib/publications";
 import styles from "./OurCalendarTemplate.module.css";
 
@@ -335,7 +335,7 @@ export function OurCalendarTemplate({
     if (editing) onPhotoClick?.(index);
   };
 
-  const handleDrop = (index: number, event: React.DragEvent<HTMLImageElement>) => {
+  const handleDrop = (index: number, event: DragEvent<HTMLImageElement>) => {
     if (!editing) return;
     event.preventDefault();
     event.currentTarget.classList.remove("over");
@@ -394,7 +394,7 @@ export function OurCalendarTemplate({
     event.preventDefault();
   };
 
-  const startSlotDrag = (index: number, event: React.DragEvent<HTMLImageElement>) => {
+  const startSlotDrag = (index: number, event: DragEvent<HTMLImageElement>) => {
     if (!editing) return;
     event.preventDefault();
     event.currentTarget.classList.add("over");
@@ -509,7 +509,7 @@ export function OurCalendarTemplate({
             className="cal"
             role="grid"
             aria-label={MONTHS[view.month] + " " + view.year}
-            style={{ gridTemplateRows: "1.02fr repeat(" + layout.rows + ",1fr)", animation: "fadein .3s ease both" }}
+            style={{ gridTemplateRows: "1.02fr repeat(" + layout.rows + ",1fr)" }}
           >
             {DAYS_OF_WEEK.map((day) => <div key={day} className="dow" role="columnheader">{day}</div>)}
             {calendarRows.map(({ day, valid }, index) => {
