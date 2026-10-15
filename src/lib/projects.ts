@@ -63,7 +63,8 @@ export const WEBSITE_TEMPLATES: Project[] = [
     awards: 0,
     aspect: 1,
     media: [`${BASE_PATH}/website-templates/birthday-today-preview.svg`],
-  },];
+  },
+];
 
 export interface IndexItem {
   title: string;
