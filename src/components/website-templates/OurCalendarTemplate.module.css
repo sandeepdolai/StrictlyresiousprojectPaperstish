@@ -31,3 +31,110 @@
 :global(.calendarRoot .cal){animation:fadein .3s ease both;}
 
 :global(html.paper-stish-calendar-active),:global(html.paper-stish-calendar-active body){touch-action:pan-y!important;}
+
+
+.tipButton {
+  position: fixed;
+  left: max(14px, env(safe-area-inset-left, 0px));
+  bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  z-index: 86;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 43px;
+  padding: 9px 15px;
+  border: 2px solid #1d1d1d;
+  border-radius: 999px;
+  color: #1d1d1d;
+  background: #fffaf0;
+  box-shadow: 3px 3px 0 #a82c47;
+  font: 600 14px/1.15 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform .15s, box-shadow .15s;
+}
+.tipButton:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #a82c47; }
+.tipButton:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #a82c47; }
+.tipButton:focus-visible, .tipClose:focus-visible, .tipReset:focus-visible, .tipGotIt:focus-visible {
+  outline: 3px solid #7aa7ff;
+  outline-offset: 2px;
+}
+.tipPanel {
+  position: fixed;
+  z-index: 87;
+  left: max(14px, env(safe-area-inset-left, 0px));
+  bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + 56px);
+  width: min(340px, calc(100vw - 28px));
+  max-height: min(72dvh, 540px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 16px 14px;
+  border: 2px solid #1d1d1d;
+  border-radius: 16px;
+  color: #1d1d1d;
+  background: #fffaf0;
+  box-shadow: 5px 5px 0 #a82c47;
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.4;
+}
+.tipHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.tipHeader h2 { margin: 0; color: #1d1d1d; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.tipClose {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  color: #1d1d1d;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tipClose:hover { background: rgba(29,29,29,.1); }
+.tipList { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.tipList li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  color: #4a4a4a;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.tipIcon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: #a82c47;
+  background: #f3e3d4;
+  font-size: 15px;
+}
+.tipList strong { display: block; color: #1d1d1d; font-size: 13.5px; font-weight: 600; }
+.tipActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.tipReset, .tipGotIt {
+  box-sizing: border-box;
+  padding: 8px 14px;
+  border: 2px solid #1d1d1d;
+  border-radius: 999px;
+  color: #1d1d1d;
+  background: #fff;
+  font: 600 13px/1.2 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+}
+.tipReset:hover { background: #f1e6d6; }
+.tipGotIt { color: #fff; background: #a82c47; border-color: #a82c47; }
+.tipGotIt:hover { background: #8e2239; }
+@media (prefers-reduced-motion: reduce) {
+  .tipButton { transition: none; }
+}
