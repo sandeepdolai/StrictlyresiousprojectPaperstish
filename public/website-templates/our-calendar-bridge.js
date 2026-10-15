@@ -15,7 +15,7 @@
 
   style.textContent =
     ".txt.paper-stish-text{white-space:pre-wrap;max-width:65%;overflow-wrap:anywhere;min-width:0}" +
-    ".paper-stish-readonly #tipcard,.paper-stish-readonly #tipbtn,.paper-stish-readonly .photo-btn{display:none!important}" +
+    ".paper-stish-readonly .photo-btn{display:none!important}" +
     ".txt.paper-stish-editable{cursor:text}";
   document.head.appendChild(style);
 
@@ -125,10 +125,8 @@
       el.setAttribute("tabindex", editing ? "0" : "-1");
     });
     var photoButton = document.getElementById("heroBtn");
-    var tipButton = document.getElementById("tipbtn");
     var tipCard = document.getElementById("tipcard");
     if (photoButton) photoButton.style.display = editing ? "" : "none";
-    if (tipButton) tipButton.style.display = editing ? "" : "none";
     if (!editing && tipCard) tipCard.hidden = true;
   }
 
