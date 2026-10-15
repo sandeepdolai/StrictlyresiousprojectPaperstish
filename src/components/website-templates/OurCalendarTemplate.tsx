@@ -55,6 +55,7 @@ export function OurCalendarTemplate({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeReady = useRef(false);
   const latestValues = useRef(values);
+  const initialEditing = useRef(editing);
   const latestEditing = useRef(editing);
   const lastFrameNotes = useRef<string | null>(null);
 
@@ -72,8 +73,23 @@ export function OurCalendarTemplate({
         const source = await response.text();
         if (!source.includes("</body>")) throw new Error("The original calendar HTML is incomplete.");
 
-        const bridge = `<script src="${BRIDGE_URL}"></script>\n</body>`;
-        const documentHtml = source.replace("</body>", bridge);
+        const initialEditMode = initialEditing.current;
+        const htmlTag = initialEditMode
+          ? '<html lang="en">`
+          : '<html lang="en" class="paper-stish-readonly">`;
+        if (!source.includes('<html lang="en">') || !source.includes("</head>")) {
+          throw new Error("The original calendar HTML has an unexpected document structure.");
+        }
+
+        let documentHtml = source.replace('<html lang="en">', htmlTag);
+        const readonlyGuard = '<style id="paper-stish-readonly-guard">.paper-stish-readonly #tipbtn,.paper-stish-readonly #tipcard,.paper-stish-readonly .photo-btn{display:none!important}</style>\n</head>';
+        documentHtml = documentHtml.replace("</head>", readonlyGuard);
+        if (!initialEditMode) {
+          documentHtml = documentHtml.replace(/contenteditable="true"/g, 'contenteditable="false"');
+        }
+
+        const bridge = '<script src="' + BRIDGE_URL + '" data-initial-editing="' + (initialEditMode ? "true" : "false") + '"></script>\n</body>';
+        documentHtml = documentHtml.replace("</body>", bridge);
         if (active) {
           setHtml(documentHtml);
           setLoadError(null);
