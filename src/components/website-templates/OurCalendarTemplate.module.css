@@ -8,12 +8,13 @@
   background: #fdf5e1;
 }
 
-/* Fill the editor viewport; auto height clips the mobile stacked pages. */
+/* Always match the full mobile viewport so the stacked pages aren't clipped. */
 .editorScreen {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  width: auto;
-  height: auto;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
 }
 
 .frame {
