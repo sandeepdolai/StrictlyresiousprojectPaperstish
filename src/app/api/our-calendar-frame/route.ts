@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const SOURCE_PATH = path.join(process.cwd(), "public", "website-templates", "our-calendar-source.html");
 const BRIDGE_PATH = path.join(process.cwd(), "public", "website-templates", "our-calendar-bridge.js");
 
-const READONLY_GUARD = '<style id="paper-stish-readonly-guard">.paper-stish-readonly #tipbtn,.paper-stish-readonly #tipcard,.paper-stish-readonly .photo-btn{display:none!important}</style>\\n</head>';
+const READONLY_GUARD = '<style id="paper-stish-readonly-guard">.paper-stish-readonly #tipbtn,.paper-stish-readonly #tipcard,.paper-stish-readonly .photo-btn{display:none!important}</style>\n</head>';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       documentHtml = documentHtml.replace(/contenteditable="true"/g, 'contenteditable="false"');
     }
 
-    const script = '<script data-initial-editing="' + (editing ? "true" : "false") + '">' + "\\n" + bridge + "\\n</script>\\n</body>";
+    const script = '<script data-initial-editing="' + (editing ? "true" : "false") + '">' + "\n" + bridge + "\n</script>\n</body>";
     documentHtml = documentHtml.replace("</body>", script);
 
     return new Response(documentHtml, {
