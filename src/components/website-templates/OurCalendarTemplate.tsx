@@ -316,13 +316,11 @@ export function OurCalendarTemplate({
   }, [view, selectedDay]);
 
   const changeMonth = (delta: number) => {
+    const nextDate = new Date(view.year, view.month + delta, 1);
+    const nextDays = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+    setSelectedDay((day) => Math.min(day, nextDays));
+    setView({ year: nextDate.getFullYear(), month: nextDate.getMonth() });
     setDragPosition(null);
-    setView((current) => {
-      const nextDate = new Date(current.year, current.month + delta, 1);
-      const nextDays = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
-      setSelectedDay((day) => Math.min(day, nextDays));
-      return { year: nextDate.getFullYear(), month: nextDate.getMonth() };
-    });
   };
 
   const goToToday = () => {
