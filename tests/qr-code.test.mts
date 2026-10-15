@@ -10,8 +10,8 @@ test("creates a scannable-sized QR matrix for a published Paper Stish URL", () =
   assert.equal(matrix.length, matrix[0].length);
   assert.equal((matrix.length - 17) % 4, 0);
   assert.equal(matrix[0][0], true);
-  assert.equal(matrix[1][1], true);
-  assert.equal(matrix[2][2], false);
+  assert.equal(matrix[1][1], false);
+  assert.equal(matrix[2][2], true);
   assert.ok(qrCodeSvgPath(matrix).startsWith("M"));
 });
 
