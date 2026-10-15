@@ -26,3 +26,6 @@
 
 .backButton { position:absolute; top:max(14px,env(safe-area-inset-top)); left:max(14px,env(safe-area-inset-left)); z-index:80; display:inline-flex; align-items:center; gap:8px; min-height:38px; padding:0 14px; border:1px solid rgba(0,0,0,.12); border-radius:999px; color:#fff; background:rgba(18,18,18,.9); box-shadow:0 5px 18px rgba(0,0,0,.14); font:600 11px/1 ui-sans-serif,system-ui,sans-serif; cursor:pointer; backdrop-filter:blur(12px); }
 .backButton:focus-visible{outline:2px solid #7f96c6;outline-offset:3px;}
+
+:global(.calendarRoot .txt){white-space:pre-wrap;max-width:65%;overflow-wrap:anywhere;min-width:0;}
+:global(.calendarRoot .cal){animation:fadein .3s ease both;}
