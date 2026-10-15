@@ -208,6 +208,14 @@ export function OurCalendarTemplate({
     return () => document.documentElement.classList.remove("paper-stish-calendar-active");
   }, []);
 
+  const today = useMemo(() => new Date(), []);
+  const [view, setView] = useState<MonthView>(() => ({ year: today.getFullYear(), month: today.getMonth() }));
+  const [selectedDay, setSelectedDay] = useState(today.getDate());
+  const [svgSize, setSvgSize] = useState({ width: 990, height: 740 });
+  const [dragPosition, setDragPosition] = useState<Point | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [tipsOpen, setTipsOpen] = useState(false);
+
   useEffect(() => {
     if (!tipsOpen) return;
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -217,13 +225,6 @@ export function OurCalendarTemplate({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [tipsOpen]);
 
-  const today = useMemo(() => new Date(), []);
-  const [view, setView] = useState<MonthView>(() => ({ year: today.getFullYear(), month: today.getMonth() }));
-  const [selectedDay, setSelectedDay] = useState(today.getDate());
-  const [svgSize, setSvgSize] = useState({ width: 990, height: 740 });
-  const [dragPosition, setDragPosition] = useState<Point | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const [tipsOpen, setTipsOpen] = useState(false);
   const notes = useMemo(() => resolveNotes(values), [values?.calendarNotes]);
   const images = useMemo(
     () => Array.from({ length: 5 }, (_, index) => typeof values?.images?.[index] === "string" ? values.images[index] as string : ""),
