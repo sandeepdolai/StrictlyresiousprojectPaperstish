@@ -86,12 +86,12 @@ body{ display:grid; place-items:center; padding:2vh 2vw; padding-left:max(2vw,en
 .photo-btn:hover{ background:rgba(168,44,71,.88); }
 .photo-btn:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
 @media (hover:none){ .photo-btn{ opacity:.92; } }
-.tipbtn{ all:unset; cursor:pointer; box-sizing:border-box; position:fixed; z-index:60; right:max(14px,env(safe-area-inset-right,0px)); bottom:max(14px,env(safe-area-inset-bottom,0px)); display:flex; align-items:center; gap:7px; padding:9px 15px; border-radius:99px; background:#fffaf0; color:#1d1d1d; border:2px solid #1d1d1d; box-shadow:3px 3px 0 var(--heart); font:600 14px 'Poppins',system-ui,sans-serif; transition:transform .15s,box-shadow .15s; }
+.tipbtn{ all:unset; cursor:pointer; box-sizing:border-box; position:fixed; z-index:60; left:max(14px,env(safe-area-inset-left,0px)); bottom:max(14px,env(safe-area-inset-bottom,0px)); display:flex; align-items:center; gap:7px; padding:9px 15px; border-radius:99px; background:#fffaf0; color:#1d1d1d; border:2px solid #1d1d1d; box-shadow:3px 3px 0 var(--heart); font:600 14px 'Poppins',system-ui,sans-serif; transition:transform .15s,box-shadow .15s; }
 .tipbtn:hover{ transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--heart); }
 .tipbtn:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--heart); }
 .tipbtn:focus-visible,.tipcard button:focus-visible{ outline:3px solid #7aa7ff; outline-offset:2px; }
-.tipcard{ position:fixed; z-index:61; right:max(14px,env(safe-area-inset-right,0px)); bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 54px); width:min(340px,calc(100vw - 28px)); box-sizing:border-box; padding:16px 16px 14px; border-radius:16px; background:#fffaf0; color:#1d1d1d; border:2px solid #1d1d1d; box-shadow:5px 5px 0 var(--heart); font-family:'Poppins',system-ui,sans-serif; }
-.tipcard:not([hidden]){ animation:pop .28s cubic-bezier(.3,1.5,.5,1) both; transform-origin:bottom right; }
+.tipcard{ position:fixed; z-index:61; left:max(14px,env(safe-area-inset-left,0px)); bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 54px); width:min(340px,calc(100vw - 28px)); box-sizing:border-box; padding:16px 16px 14px; border-radius:16px; background:#fffaf0; color:#1d1d1d; border:2px solid #1d1d1d; box-shadow:5px 5px 0 var(--heart); font-family:'Poppins',system-ui,sans-serif; }
+.tipcard:not([hidden]){ animation:pop .28s cubic-bezier(.3,1.5,.5,1) both; transform-origin:bottom left; }
 @keyframes pop{ from{ opacity:0; transform:translateY(8px) scale(.94); } to{ opacity:1; transform:none; } }
 .tiphead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .tiphead h2{ font-size:17px; font-weight:700; letter-spacing:-.01em; }
