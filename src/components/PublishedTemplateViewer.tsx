@@ -133,6 +133,10 @@ export function PublishedTemplateViewer({
       return <BirthdayTodayTemplate key={publicationKey} values={serverPublication.values} />;
     }
 
+    if (serverPublication.templateSlug === "birthday-today" && serverPublication.values) {
+      return <BirthdayTodayTemplate values={serverPublication.values} />;
+    }
+
     if (serverPublication.templateSlug === "smart-edit" && serverPublication.document) {
       return (
         <SmartEditViewer key={publicationKey}
