@@ -9,6 +9,7 @@ import {
   type PublishedRecord,
   type TemplatePublicationValues,
 } from "@/lib/publications";
+import { isValidCalendarHeartDate } from "@/lib/calendarHeartValue";
 import { PhotoAlbumTemplate, DEFAULT_ALBUM_CAPTIONS, DEFAULT_ALBUM_PHOTOS } from "./PhotoAlbumTemplate";
 import { BirthdayTodayTemplate } from "./BirthdayTodayTemplate";
 import { LoveHeartTemplate } from "./LoveHeartTemplate";
@@ -250,6 +251,7 @@ export function WebsiteEditor({
             captions,
             letterParagraphs: restoredLetterText.letterParagraphs,
             calendarNotes: restoredCalendarNotes,
+            calendarHeart: isValidCalendarHeartDate(raw.calendarHeart) ? { ...raw.calendarHeart } : defaults.calendarHeart,
           });
         }
         if (typeof draft.username === "string") setUsername(draft.username.slice(0, 60));
@@ -466,6 +468,10 @@ export function WebsiteEditor({
               calendarNotes[index] = value;
               return { ...current, calendarNotes };
             });
+            setHasUnpublishedChanges(true);
+          }}
+          onHeartChange={(calendarHeart) => {
+            setValues((current) => ({ ...current, calendarHeart }));
             setHasUnpublishedChanges(true);
           }}
           onPhotoClick={openPhotoChooser}
