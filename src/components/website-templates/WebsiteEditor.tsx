@@ -10,6 +10,7 @@ import {
   type TemplatePublicationValues,
 } from "@/lib/publications";
 import { PhotoAlbumTemplate, DEFAULT_ALBUM_CAPTIONS, DEFAULT_ALBUM_PHOTOS } from "./PhotoAlbumTemplate";
+import { BirthdayTodayTemplate } from "./BirthdayTodayTemplate";
 import { LoveHeartTemplate } from "./LoveHeartTemplate";
 import {
   FOREVER_AND_EVER_TEXT_DEFAULTS,
@@ -20,11 +21,12 @@ import { OUR_CALENDAR_DEFAULT_NOTES, OurCalendarTemplate } from "./OurCalendarTe
 import { LoveOfMyLifeTemplate } from "./LoveOfMyLifeTemplate";
 import styles from "./WebsiteEditor.module.css";
 
-export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "photo-album" | "love-heart" | "forever-and-ever" | "our-calendar";
+export type WebsiteEditorTemplateSlug = "love-of-my-life" | "birthday-template" | "birthday-today" | "photo-album" | "love-heart" | "forever-and-ever" | "our-calendar";
 
 type EditableWebsiteField =
   | "heading"
   | "loveMessage"
+  | "birthdayName"
   | "intro"
   | "years"
   | "yearsLabel"
@@ -58,6 +60,13 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
     signature: "Celebrating you, always",
     photoUrl: null,
     images: [],
+    captions: [],
+  },
+  "birthday-today": {
+    heading: "who’s birthday is it today?",
+    birthdayName: "",
+    photoUrl: null,
+    images: ["", "", "", ""],
     captions: [],
   },
   "photo-album": {
@@ -95,6 +104,7 @@ const TEXT_DEFAULTS: Record<WebsiteEditorTemplateSlug, TemplatePublicationValues
 const TEMPLATE_TITLES: Record<WebsiteEditorTemplateSlug, string> = {
   "love-of-my-life": "Love of My Life",
   "birthday-template": "Birthday Website",
+  "birthday-today": "who’s birthday is it today?",
   "photo-album": "Photo Album",
   "love-heart": "Love Heart",
   "forever-and-ever": "I love you forever and ever, my baby!",
@@ -161,7 +171,7 @@ export function WebsiteEditor({
   const [values, setValues] = useState<TemplatePublicationValues>(() => defaultValues(templateSlug));
   const [username, setUsername] = useState("");
   const [websiteName, setWebsiteName] = useState(
-    templateSlug === "photo-album" ? "photo-album" : templateSlug === "birthday-template" ? "birthday" : templateSlug === "love-heart" ? "love-heart" : templateSlug === "forever-and-ever" ? "forever-and-ever" : "our-story",
+    templateSlug === "birthday-today" ? "birthday-today" : templateSlug === "photo-album" ? "photo-album" : templateSlug === "birthday-template" ? "birthday" : templateSlug === "love-heart" ? "love-heart" : templateSlug === "forever-and-ever" ? "forever-and-ever" : "our-story",
   );
   const [draftReady, setDraftReady] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -175,6 +185,7 @@ export function WebsiteEditor({
   const publishedLinkInput = useRef<HTMLInputElement>(null);
   const targetPhotoIndex = useRef(0);
   const isAlbum = templateSlug === "photo-album";
+  const isBirthdayToday = templateSlug === "birthday-today";
   const isForeverAndEver = templateSlug === "forever-and-ever";
   const isOurCalendar = templateSlug === "our-calendar";
   const title = TEMPLATE_TITLES[templateSlug];
@@ -226,6 +237,7 @@ export function WebsiteEditor({
             ...defaults,
             heading: restoredLetterText.heading,
             loveMessage: text("loveMessage", defaults.loveMessage ?? "", 100),
+            birthdayName: text("birthdayName", defaults.birthdayName ?? "", 40),
             intro: text("intro", defaults.intro ?? "", 400),
             noteHeading: text("noteHeading", defaults.noteHeading ?? "", 240),
             signature: text("signature", defaults.signature ?? "", 160),
@@ -304,6 +316,13 @@ export function WebsiteEditor({
             ...DEFAULT_ALBUM_CAPTIONS.slice(savedCaptions.length),
           ].slice(0, MAX_ALBUM_PHOTOS);
           return { ...current, images: photos, captions };
+        });
+      } else if (isBirthdayToday) {
+        const index = Math.max(0, Math.min(3, targetPhotoIndex.current));
+        setValues((current) => {
+          const images = Array.from({ length: 4 }, (_, i) => current.images?.[i] ?? "");
+          images[index] = optimized;
+          return { ...current, images };
         });
       } else if (isForeverAndEver) {
         const index = Math.max(0, Math.min(2, targetPhotoIndex.current));
@@ -414,6 +433,26 @@ export function WebsiteEditor({
           editing
           onTextChange={changeText}
           onPhotoSelected={choosePhotoFile}
+          onExit={onClose}
+        />
+      ) : templateSlug === "birthday-today" ? (
+        <BirthdayTodayTemplate
+          values={values}
+          editing
+          onBirthdayNameChange={(value) => changeText("birthdayName", value)}
+          onPhotoClick={openPhotoChooser}
+          onPhotoFile={(index, file) => {
+            targetPhotoIndex.current = index;
+            void choosePhotoFile(file);
+          }}
+          onPhotoRemove={(index) => {
+            setValues((current) => {
+              const images = Array.from({ length: 4 }, (_, i) => current.images?.[i] ?? "");
+              images[index] = "";
+              return { ...current, images };
+            });
+            setHasUnpublishedChanges(true);
+          }}
           onExit={onClose}
         />
       ) : isOurCalendar ? (

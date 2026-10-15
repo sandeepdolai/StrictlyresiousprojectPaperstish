@@ -16,6 +16,7 @@ import { PhotoAlbumTemplate } from "@/components/website-templates/PhotoAlbumTem
 import { LoveHeartTemplate } from "@/components/website-templates/LoveHeartTemplate";
 import { ForeverAndEverTemplate } from "@/components/website-templates/ForeverAndEverTemplate";
 import { OurCalendarTemplate } from "@/components/website-templates/OurCalendarTemplate";
+import { BirthdayTodayTemplate } from "@/components/website-templates/BirthdayTodayTemplate";
 
 interface Props {
   username: string;
@@ -118,6 +119,10 @@ export function PublishedTemplateViewer({
 
     if (serverPublication.templateSlug === "our-calendar" && serverPublication.values) {
       return <OurCalendarTemplate values={serverPublication.values} />;
+    }
+
+    if (serverPublication.templateSlug === "birthday-today" && serverPublication.values) {
+      return <BirthdayTodayTemplate values={serverPublication.values} />;
     }
 
     if (serverPublication.templateSlug === "smart-edit" && serverPublication.document) {

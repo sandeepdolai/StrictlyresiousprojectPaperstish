@@ -53,6 +53,17 @@ export const WEBSITE_TEMPLATES: Project[] = [
     aspect: 1,
     media: [`${BASE_PATH}/website-templates/our-calendar-preview.svg`],
   },
+
+  {
+    title: "who’s birthday is it today?",
+    slug: "birthday-today",
+    description: "A soft-blue birthday page with an editable name pill and four personal photo slots.",
+    link: null,
+    tags: [],
+    awards: 0,
+    aspect: 1,
+    media: [`${BASE_PATH}/website-templates/birthday-today-preview.svg`],
+  },
 ];
 
 export interface IndexItem {

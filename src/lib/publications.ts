@@ -28,6 +28,7 @@ export { slugPart };
 export const PUBLISHABLE_TEMPLATE_SLUGS = [
   "smart-edit",
   "birthday-template",
+  "birthday-today",
   "love-of-my-life",
   "photo-album",
   "love-heart",
@@ -47,6 +48,8 @@ export interface TemplatePublicationValues {
   heading?: string;
   /** Editable greeting text inside the animated Love Heart template. */
   loveMessage?: string;
+  /** Editable name inside the birthday-today template. */
+  birthdayName?: string;
   /** Extra editable copy used by the fixed personal website themes. */
   intro?: string;
   noteHeading?: string;
@@ -167,6 +170,7 @@ export function validateTemplateValues(raw: unknown): TemplatePublicationValues 
   const values: TemplatePublicationValues = {
     heading: boundedString(v.heading, 200),
     loveMessage: boundedString(v.loveMessage, 100),
+    birthdayName: boundedString(v.birthdayName, 40),
     intro: boundedString(v.intro, 400),
     noteHeading: boundedString(v.noteHeading, 240),
     signature: boundedString(v.signature, 160),
