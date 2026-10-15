@@ -213,11 +213,12 @@ export function OurCalendarTemplate({
   }, []);
 
   const today = useMemo(() => new Date(), []);
+  const initialHeart = isValidCalendarHeartDate(values?.calendarHeart) ? values.calendarHeart : undefined;
   const [view, setView] = useState<MonthView>(() => ({
-    year: values?.calendarHeart?.year ?? today.getFullYear(),
-    month: values?.calendarHeart?.month ?? today.getMonth(),
+    year: initialHeart?.year ?? today.getFullYear(),
+    month: initialHeart?.month ?? today.getMonth(),
   }));
-  const [selectedDay, setSelectedDay] = useState(() => values?.calendarHeart?.day ?? today.getDate());
+  const [selectedDay, setSelectedDay] = useState(() => initialHeart?.day ?? today.getDate());
   const [svgSize, setSvgSize] = useState({ width: 990, height: 740 });
   const [dragPosition, setDragPosition] = useState<Point | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -283,7 +284,7 @@ export function OurCalendarTemplate({
     [values?.images],
   );
   useEffect(() => {
-    const savedHeart = values?.calendarHeart;
+    const savedHeart = isValidCalendarHeartDate(values?.calendarHeart) ? values.calendarHeart : undefined;
     if (!savedHeart) return;
     setView((current) => current.year === savedHeart.year && current.month === savedHeart.month
       ? current
