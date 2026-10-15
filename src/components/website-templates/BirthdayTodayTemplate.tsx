@@ -155,7 +155,7 @@ export function BirthdayTodayTemplate({
             <div key={SLOT_CLASSES[index]} className={styles.slot + " " + styles[SLOT_CLASSES[index]]}>
               <button
                 type="button"
-                className={styles.photo + (image ? " " + styles.hasPhoto : "")}
+                className={styles.photo}
                 aria-label={(image ? "Change photo " : "Add photo ") + (index + 1)}
                 disabled={!editing}
                 onClick={() => { if (editing) onPhotoClick?.(index); }}
