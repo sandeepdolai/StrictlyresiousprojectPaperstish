@@ -370,6 +370,7 @@ export function OurCalendarTemplate({
 
 
   const changeMonth = (delta: number) => {
+    if (!editing) return;
     const nextDate = new Date(view.year, view.month + delta, 1);
     const nextDays = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
     const nextSelectedDay = Math.min(selectedDay, nextDays);
@@ -381,6 +382,7 @@ export function OurCalendarTemplate({
   };
 
   const goToToday = () => {
+    if (!editing) return;
     const todayView = { year: today.getFullYear(), month: today.getMonth() };
     setView(todayView);
     setSelectedDay(today.getDate());
@@ -401,6 +403,7 @@ export function OurCalendarTemplate({
   };
 
   const beginHeartDrag = (event: PointerEvent<SVGGElement>) => {
+    if (!editing) return;
     if (event.button !== 0 && event.pointerType === "mouse") return;
     const svg = heartSvgRef.current;
     const rect = svg?.getBoundingClientRect();
@@ -421,6 +424,7 @@ export function OurCalendarTemplate({
   };
 
   const moveHeartDrag = (event: PointerEvent<SVGGElement>) => {
+    if (!editing) return;
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     const next = clampPoint({
@@ -431,6 +435,7 @@ export function OurCalendarTemplate({
   };
 
   const endHeartDrag = (event: PointerEvent<SVGGElement>) => {
+    if (!editing) return;
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     const next = clampPoint({
@@ -446,6 +451,7 @@ export function OurCalendarTemplate({
   };
 
   const handleHeartKeyDown = (event: KeyboardEvent<SVGGElement>) => {
+    if (!editing) return;
     const delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key];
     if (!delta) return;
     const next = selectedDay + delta;
@@ -552,19 +558,25 @@ export function OurCalendarTemplate({
               Change photo
             </button>
           )}
-          <div className="monthbar" role="group" aria-label="Choose month">
-            <button type="button" aria-label="Previous month" onClick={() => changeMonth(-1)}>
-              <svg viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 2L3 10l6 8" />
-              </svg>
-            </button>
-            <div className="mlabel" aria-live="polite">{MONTHS[view.month] + " " + view.year}</div>
-            <button type="button" aria-label="Next month" onClick={() => changeMonth(1)}>
-              <svg viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 2l6 8-6 8" />
-              </svg>
-            </button>
-            <button type="button" className="today" onClick={goToToday}>Today</button>
+          <div className="monthbar" role="group" aria-label={editing ? "Choose month" : "Published calendar month"}>
+            {editing && (
+              <button type="button" aria-label="Previous month" onClick={() => changeMonth(-1)}>
+                <svg viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 2L3 10l6 8" />
+                </svg>
+              </button>
+            )}
+            <div className="mlabel" aria-live={editing ? "polite" : undefined}>{MONTHS[view.month] + " " + view.year}</div>
+            {editing && (
+              <>
+                <button type="button" aria-label="Next month" onClick={() => changeMonth(1)}>
+                  <svg viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 2l6 8-6 8" />
+                  </svg>
+                </button>
+                <button type="button" className="today" onClick={goToToday}>Today</button>
+              </>
+            )}
           </div>
           <div
             key={view.year + "-" + view.month}
@@ -585,7 +597,7 @@ export function OurCalendarTemplate({
                   aria-current={isToday ? "date" : undefined}
                   aria-selected={selected ? true : undefined}
                   className={[isToday ? "today-cell" : "", selected ? "heart-date" : ""].filter(Boolean).join(" ") || undefined}
-                  onClick={valid ? () => {
+                  onClick={editing && valid ? () => {
                     setSelectedDay(day);
                     setDragPosition(null);
                     onHeartChange?.({ year: view.year, month: view.month, day });
@@ -601,24 +613,26 @@ export function OurCalendarTemplate({
             className="heart"
             viewBox={"0 0 " + svgSize.width + " " + svgSize.height}
             preserveAspectRatio="none"
-            aria-label="Move the heart marker between dates"
+            aria-label={editing ? "Move the heart marker between dates" : "Published heart marker for " + MONTHS[view.month] + " " + selectedDay}
           >
             <g
               id="hg"
-              tabIndex={0}
-              role="button"
-              aria-label={"Heart marker on " + MONTHS[view.month] + " " + selectedDay + ". Drag it, tap a date, or use the arrow keys to move it."}
-              className={dragging ? "drag" : ""}
+              tabIndex={editing ? 0 : undefined}
+              role={editing ? "button" : undefined}
+              aria-label={editing
+                ? "Heart marker on " + MONTHS[view.month] + " " + selectedDay + ". Drag it, tap a date, or use the arrow keys to move it."
+                : "Published heart marker on " + MONTHS[view.month] + " " + selectedDay}
+              className={editing && dragging ? "drag" : ""}
               style={{ transform: heartTransform }}
-              onPointerDown={beginHeartDrag}
-              onPointerMove={moveHeartDrag}
-              onPointerUp={endHeartDrag}
-              onPointerCancel={endHeartDrag}
-              onKeyDown={handleHeartKeyDown}
+              onPointerDown={editing ? beginHeartDrag : undefined}
+              onPointerMove={editing ? moveHeartDrag : undefined}
+              onPointerUp={editing ? endHeartDrag : undefined}
+              onPointerCancel={editing ? endHeartDrag : undefined}
+              onKeyDown={editing ? handleHeartKeyDown : undefined}
             >
               <path pathLength="1" d="M340 432 C385 445 430 440 462 418 C500 390 520 360 548 322 C575 300 585 262 565 245 C545 228 505 240 490 272 C478 244 446 228 427 244 C405 264 428 304 462 330 C490 352 515 345 540 330" />
               <path pathLength="1" d="M572 340 C548 334 508 336 478 352" />
-              <path className="hit" d="M340 432 C385 445 430 440 462 418 C500 390 520 360 548 322 C575 300 585 262 565 245 C545 228 505 240 490 272 C478 244 446 228 427 244 C405 264 428 304 462 330 C490 352 515 345 540 330" />
+              {editing && <path className="hit" d="M340 432 C385 445 430 440 462 418 C500 390 520 360 548 322 C575 300 585 262 565 245 C545 228 505 240 490 272 C478 244 446 228 427 244 C405 264 428 304 462 330 C490 352 515 345 540 330" />}
             </g>
           </svg>
         </section>
