@@ -8,9 +8,10 @@
   background: #fdf5e1;
 }
 
-/* In the editor, fill its existing full-screen layer instead of nesting a fixed viewport. */
+/* Fill the editor viewport; auto height clips the mobile stacked pages. */
 .editorScreen {
   position: absolute;
+  inset: 0;
   width: auto;
   height: auto;
 }
