@@ -36,9 +36,9 @@ function photos(values?: TemplatePublicationValues) {
 }
 
 /**
- * Fetch the user's original HTML and attach the external editor bridge only
- * to the iframe document at runtime. The saved HTML in public/ is never edited
- * to wire editor messaging, and errors are shown instead of a blank canvas.
+ * Open the original template directly in an iframe served by the lightweight
+ * runtime route. The browser does not wait for a client-side fetch or React
+ * loading state; the original uploaded HTML file remains unchanged.
  */
 export function OurCalendarTemplate({
   values,
