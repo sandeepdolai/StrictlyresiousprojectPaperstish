@@ -205,7 +205,7 @@ export function WebsiteEditor({
     : templateSlug === "photo-album"
       ? ["our-memories", "little-moments", "photo-album"]
       : ["our-story", "for-you", "a-little-surprise"];
-  const qrMatrix = useMemo(() => published?.url ? qrCodeMatrix(published.url) : null, [published?.url]);
+  const qrMatrix = useMemo(() => published?.url ? qrCodeMatrix(published!.url) : null, [published?.url]);
 
   useEffect(() => {
     if (!publishDialogOpen) return;
@@ -471,7 +471,7 @@ export function WebsiteEditor({
   const copyLink = async () => {
     if (!published) return;
     try {
-      await navigator.clipboard.writeText(published.url);
+      await navigator.clipboard.writeText(published!.url);
       setCopyStatus("Link copied.");
     } catch {
       publishedLinkInput.current?.focus();
@@ -484,7 +484,7 @@ export function WebsiteEditor({
     if (!published) return;
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title, url: published.url });
+        await navigator.share({ title, url: published!.url });
         return;
       } catch (shareError) {
         if (shareError instanceof Error && shareError.name === "AbortError") return;
@@ -709,7 +709,7 @@ export function WebsiteEditor({
                   <input
                     ref={publishedLinkInput}
                     className={styles.publishedLink}
-                    value={published.url}
+                    value={published!.url}
                     readOnly
                     onFocus={(event) => event.currentTarget.select()}
                     aria-label="Published website link"
@@ -735,7 +735,7 @@ export function WebsiteEditor({
                     Share
                   </button>
                 </div>
-                <a className={styles.openLink} href={published.url} target="_blank" rel="noreferrer">Open published website <span aria-hidden="true">↗</span></a>
+                <a className={styles.openLink} href={published!.url} target="_blank" rel="noreferrer">Open published website <span aria-hidden="true">↗</span></a>
 
                 <button
                   type="button"
@@ -759,7 +759,7 @@ export function WebsiteEditor({
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox={`0 0 ${qrMatrix.length + 8} ${qrMatrix.length + 8}`}
                           role="img"
-                          aria-label={`QR code for ${published.url}`}
+                          aria-label={`QR code for ${published!.url}`}
                           shapeRendering="crispEdges"
                         >
                           <rect width="100%" height="100%" fill="#ffffff" />
@@ -771,7 +771,7 @@ export function WebsiteEditor({
                     </div>
                     <div className={styles.qrDetails}>
                       <strong>Scan to open your website</strong>
-                      <span>{published.url}</span>
+                      <span>{published!.url}</span>
                       <button type="button" className={styles.qrSaveButton} onClick={saveQrCode} disabled={!qrMatrix}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                           <path d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3" />
